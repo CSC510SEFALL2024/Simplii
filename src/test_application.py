@@ -195,5 +195,69 @@ class MockApplicationTestCase(unittest.TestCase):
         response = mock_test_client().get('/drafts')
         self.assertEqual(response.status_code, 200)
 
+    #Test cases for dark mode feature
+        @patch('flask.Flask.test_client')
+    def test_theme_toggle_button_presence(self, mock_test_client):
+        """Verify that the theme toggle button is present in the rendered HTML."""
+        mock_test_client().get.return_value.status_code = 200
+        mock_test_client().get.return_value.data = b'<button id="themeToggleButton" class="btn btn-primary">'
+        response = mock_test_client().get('/')
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(b'<button id="themeToggleButton" class="btn btn-primary">', response.data)
+
+    @patch('flask.Flask.test_client')
+    def test_theme_initial_load_light(self, mock_test_client):
+        """Ensure light theme is applied when 'theme' in localStorage is 'light'."""
+        mock_test_client().get.return_value.status_code = 200
+        mock_test_client().get.return_value.data = b'main.css'
+        response = mock_test_client().get('/')
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(b'main.css', response.data)
+
+    @patch('flask.Flask.test_client')
+    def test_theme_initial_load_dark(self, mock_test_client):
+        """Ensure dark theme is applied when 'theme' in localStorage is 'dark'."""
+        mock_test_client().get.return_value.status_code = 200
+        mock_test_client().get.return_value.data = b'maindark.css'
+        response = mock_test_client().get('/')
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(b'maindark.css', response.data)
+
+    @patch('flask.Flask.test_client')
+    def test_toggle_theme_to_dark(self, mock_test_client):
+        """Simulate toggling the theme to dark mode and verify the changes."""
+        mock_test_client().post.return_value.status_code = 200
+        mock_test_client().post.return_value.data = b'maindark.css'
+        response = mock_test_client().post('/toggle_theme', data={'currentTheme': 'light'})
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(b'maindark.css', response.data)
+
+    @patch('flask.Flask.test_client')
+    def test_toggle_theme_to_light(self, mock_test_client):
+        """Simulate toggling the theme to light mode and verify the changes."""
+        mock_test_client().post.return_value.status_code = 200
+        mock_test_client().post.return_value.data = b'main.css'
+        response = mock_test_client().post('/toggle_theme', data={'currentTheme': 'dark'})
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(b'main.css', response.data)
+
+    @patch('flask.Flask.test_client')
+    def test_icon_change_to_moon_on_dark(self, mock_test_client):
+        """Ensure the theme icon updates to 'moon' when toggling to dark mode."""
+        mock_test_client().post.return_value.status_code = 200
+        mock_test_client().post.return_value.data = b'fa-moon'
+        response = mock_test_client().post('/toggle_theme', data={'currentTheme': 'light'})
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(b'fa-moon', response.data)
+
+    @patch('flask.Flask.test_client')
+    def test_icon_change_to_sun_on_light(self, mock_test_client):
+        """Ensure the theme icon updates to 'sun' when toggling to light mode."""
+        mock_test_client().post.return_value.status_code = 200
+        mock_test_client().post.return_value.data = b'fa-sun'
+        response = mock_test_client().post('/toggle_theme', data={'currentTheme': 'dark'})
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(b'fa-sun', response.data)
+
 if __name__ == '__main__':
     unittest.main()
