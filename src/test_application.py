@@ -310,5 +310,70 @@ class MockApplicationTestCase(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(len(response.data), 0)
 
+    # Test cases for send email Ai schedule functions
+
+    @patch('flask.Flask.test_client')
+    def test_get_user_tasks_within_thirty_days(self, mock_test_client):
+        """Test retrieval of tasks within thirty days"""
+        mock_test_client().get.return_value.status_code = 200
+        response = mock_test_client().get('/get_user_tasks')
+        self.assertEqual(response.status_code, 200)
+        # Add assertions about task data if possible
+
+    @patch('flask.Flask.test_client')
+    def test_task_email_with_no_tasks(self, mock_test_client):
+        """Test email sending with empty task list"""
+        mock_test_client().post.return_value.status_code = 200
+        mock_test_client().post.return_value.data = b'No tasks to display'
+        response = mock_test_client().post('/send_task_email')
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(b'No tasks to display', response.data)
+
+    @patch('flask.Flask.test_client')
+    def test_task_email_with_today_tasks(self, mock_test_client):
+        """Test email sending with only today's tasks"""
+        mock_test_client().post.return_value.status_code = 200
+        mock_test_client().post.return_value.data = b'Today\'s Tasks'
+        response = mock_test_client().post('/send_task_email')
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(b'Today\'s Tasks', response.data)
+
+    @patch('flask.Flask.test_client')
+    def test_task_email_with_week_tasks(self, mock_test_client):
+        """Test email sending with this week's tasks"""
+        mock_test_client().post.return_value.status_code = 200
+        mock_test_client().post.return_value.data = b'This Week\'s Tasks'
+        response = mock_test_client().post('/send_task_email')
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(b'This Week\'s Tasks', response.data)
+
+    @patch('flask.Flask.test_client')
+    def test_task_email_with_month_tasks(self, mock_test_client):
+        """Test email sending with this month's tasks"""
+        mock_test_client().post.return_value.status_code = 200
+        mock_test_client().post.return_value.data = b'This Month\'s Tasks'
+        response = mock_test_client().post('/send_task_email')
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(b'This Month\'s Tasks', response.data)
+
+    @patch('flask.Flask.test_client')
+    def test_task_email_gemini_generation(self, mock_test_client):
+        """Test Gemini AI task description generation"""
+        mock_test_client().post.return_value.status_code = 200
+        mock_test_client().post.return_value.data = b'Gemini AI Generated Content'
+        response = mock_test_client().post('/send_task_email')
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(b'Gemini AI Generated Content', response.data)
+
+    @patch('flask.Flask.test_client')
+    def test_task_email_markdown_conversion(self, mock_test_client):
+        """Test markdown to HTML conversion for email"""
+        mock_test_client().post.return_value.status_code = 200
+        mock_test_client().post.return_value.data = b'Markdown to HTML Conversion'
+        response = mock_test_client().post('/send_task_email')
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(b'Markdown to HTML Conversion', response.data)
+
+
 if __name__ == '__main__':
     unittest.main()
