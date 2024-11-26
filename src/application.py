@@ -414,7 +414,7 @@ def recommend():
         user_id = ObjectId(user_str_id)
 
         # Fetch all tasks for the user and sort by 'duedate' in ascending order
-        tasks = list(mongo.db.tasks.find({'user_id': user_id}).sort('duedate', ASCENDING))
+        tasks = list(mongo.db.tasks.find({'user_id': user_id}).sort({'duedate':1, 'priority':1}))
         return render_template('recommend.html', title='Recommend', tasks=tasks)
     else:
         return redirect(url_for('home'))
