@@ -494,10 +494,10 @@ def send_email_reminders():
             relevant_tasks = list(relevant_tasks)
 
             # Create an HTML table from the task data
-            table_html = "<table border='1'><tr><th>Task Name</th><th>Category</th><th>Start Date</th><th>Due Date</th><th>Status</th><th>Hours</th></tr>"
+            table_html = "<table border='1'><tr><th>Task Name</th><th>Category</th><th>Priority</th><th>Start Date</th><th>Due Date</th><th>Status</th><th>Hours</th></tr>"
 
             for task in relevant_tasks:
-                table_html += f"<tr><td>{task['taskname']}</td><td>{task['category']}</td><td>{task['startdate']}</td><td>{task['duedate']}</td><td>{task['status']}</td><td>{task['hours']}</td></tr>"
+                table_html += f"<tr><td>{task['taskname']}</td><td>{task['category']}</td><td>{task['priority']}</td><td>{task['startdate']}</td><td>{task['duedate']}</td><td>{task['status']}</td><td>{task['hours']}</td></tr>"
 
             table_html += "</table>"
 
@@ -963,6 +963,7 @@ def scheduleReminder():
     form = ReminderForm()
     form.taskname.data = d['taskname']
     form.category.data = d['category']
+    form.priority.data = d['priority']
     form.status.data = d['status']
     form.hours.data = d['hours']
     form.startdate.data = d['startdate']
@@ -977,6 +978,7 @@ def scheduleReminder():
         startdate = form.startdate.data
         duedate = form.duedate.data
         category = form.category.data
+        priority = form.priority.data
         reminder_date = request.form.get('reminder_date')
         reminder_time_str = request.form.get('reminderTime')
 
@@ -989,6 +991,7 @@ def scheduleReminder():
             'task_id': task_id,
             'taskname': taskname,
             'category': category,
+            'priority': priority,
             'startdate':startdate,
             'duedate':duedate,
             'reminder_date': reminder_date_str,
@@ -1142,6 +1145,7 @@ def updateTask():
 
         form.taskname.data = d['taskname']
         form.category.data = d['category']
+        form.priority.data = d['priority']
         form.status.data = d['status']
         form.hours.data = d['hours']
         
@@ -1164,12 +1168,13 @@ def updateTask():
                 user_id = ObjectId(user_str_id)
                 taskname = request.form.get('taskname')
                 category = request.form.get('category')
+                priority = request.form.get('priority')
                 startdate = request.form.get('startdate')
                 duedate = request.form.get('duedate')
                 hours = request.form.get('hours')
                 status = request.form.get('status')
-                mongo.db.tasks.update_one({'user_id': user_id, 'taskname': d['taskname'], 'startdate': d['startdate'], 'duedate': d['duedate']},
-                                      {'$set': {'taskname': taskname, 'startdate': startdate, 'duedate': duedate, 'category': category, 'status': status, 'hours': hours}})
+                mongo.db.tasks.update_one({'user_id': user_id, 'taskname': d['taskname'], 'startdate': d['startdate'], 'priority': d['priority'], 'duedate': d['duedate']},
+                                      {'$set': {'taskname': taskname, 'startdate': startdate, 'duedate': duedate, 'category': category, 'priority': priority, 'status': status, 'hours': hours}})
             flash(f' {form.taskname.data} Task Updated!', 'success')
             return redirect(url_for('dashboard'))
     else:
