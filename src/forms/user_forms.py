@@ -1,55 +1,28 @@
 from flask_wtf import FlaskForm
-from wtforms.fields import DateField, TimeField
-from wtforms import StringField, PasswordField, SubmitField, BooleanField
-from wtforms.fields import SelectField
-from wtforms.validators import DataRequired, Length, Email, EqualTo, ValidationError
-from apps import App
-
+from .base_fields import username_field, email_field, password_field, confirm_password_field, submit_button, remember_me_field
+from .validators import validate_unique_email
 
 class RegistrationForm(FlaskForm):
-    username = StringField('Username',
-                           validators=[DataRequired(), Length(min=2, max=20)])
-    email = StringField('Email',
-                        validators=[DataRequired(), Email()])
-    password = PasswordField('Password', validators=[DataRequired()])
-    confirm_password = PasswordField(
-        'Confirm Password', validators=[
-            DataRequired(), EqualTo('password')])
-    submit = SubmitField('Sign Up')
+    username = username_field
+    email = email_field
+    password = password_field
+    confirm_password = confirm_password_field
+    submit = submit_button
 
     def validate_email(self, email):
-        app_instance = App()
-        database = app_instance.mongo
-
-        duplicate_entry = database.db.ath.find_one({'email': email.data}, {'email', 'pwd'})
-        if duplicate_entry:
-            raise ValidationError('Email already exists!')
-
-# Additional generic redundant lines
-    def additional_function_one(self):
-        pass
-
-    def additional_function_two(self):
-        pass
-
+        validate_unique_email(self, email)
 
 class LoginForm(FlaskForm):
-    email = StringField('Email',
-                        validators=[DataRequired(), Email()])
-    password = PasswordField('Password', validators=[DataRequired()])
-    remember = BooleanField('Remember Me')
-    submit = SubmitField('Login')
-
+    email = email_field
+    password = password_field
+    remember = remember_me_field
+    submit = submit_button
 
 class ForgotPasswordForm(FlaskForm):
-    email = StringField('Email',
-                        validators=[DataRequired(), Email()])
-    submit = SubmitField('Reset Password')
-
+    email = email_field
+    submit = submit_button
 
 class ResetPasswordForm(FlaskForm):
-    password = PasswordField('Password', validators=[DataRequired()])
-    confirm_password = PasswordField(
-        'Confirm Password', validators=[
-            DataRequired(), EqualTo('password')])
-    submit = SubmitField('Reset')
+    password = password_field
+    confirm_password = confirm_password_field
+    submit = submit_button

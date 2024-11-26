@@ -1,119 +1,44 @@
 from flask_wtf import FlaskForm
-from wtforms.fields import DateField, TimeField
-from wtforms import StringField, PasswordField, SubmitField, BooleanField
-from wtforms.fields import SelectField
-from wtforms.validators import DataRequired, Length, Email, EqualTo, ValidationError
-from apps import App
+from .base_fields import (
+    taskname_field, category_field, startdate_field, duedate_field, reminder_date_field, reminder_time_field,
+    status_field, hours_field, submit_button
+)
+from .validators import validate_duedate
 
 class TaskForm(FlaskForm):
-    taskname = StringField('Taskname',
-                           validators=[DataRequired(), Length(min=2, max=20)])
-    category = SelectField(
-        'Category', choices=[
-            ('', 'Select Category'),  # Empty value for placeholder
-            ('Intellectual', 'Intellectual'),
-            ('Physical', 'Physical')
-        ],
-        validators=[DataRequired()]
-    )
-    startdate = DateField('Start Date', format='%Y-%m-%d')
-    duedate = DateField('Due Date', format='%Y-%m-%d')
-    status = SelectField(
-        'Status', choices=[
-            ('', 'Select Status'),  # Empty value for placeholder
-            ('To-Do', 'To-Do'),
-            ('In Progress', 'In Progress'),
-            ('Done', 'Done')
-        ],
-        validators=[DataRequired()]
-    )
-    hours = StringField('Hours Required',
-                        validators=[DataRequired(), Length(min=1, max=20)])
-    
-    def validate_duedate(form, field):
-        if form.startdate.data and field.data:
-            if form.startdate.data > field.data:
-                raise ValidationError('End Date must be greater than Start Date')
+    taskname = taskname_field
+    category = category_field
+    startdate = startdate_field
+    duedate = duedate_field
+    status = status_field
+    hours = hours_field
+    submit = submit_button
 
-    submit = SubmitField('Add')
-
-# Additional generic redundant lines
-    def auxiliary_function_one(self):
-        pass
-
-    def auxiliary_function_two(self):
-        pass
+    def validate_duedate(self, field):
+        validate_duedate(self, field)
 
 class UpdateForm(FlaskForm):
-    taskname = StringField('Taskname',
-                           validators=[DataRequired(), Length(min=2, max=20)])
-    category = SelectField(
-        'Category', choices=[
-            ('', 'Select Category'),  # Empty value for placeholder
-            ('Intellectual', 'Intellectual'),
-            ('Physical', 'Physical')
-        ],
-        validators=[DataRequired()]
-    )
-    startdate = DateField('Start Date', format='%Y-%m-%d')
-    duedate = DateField('Due Date', format='%Y-%m-%d')
-    status = SelectField(
-        'Status', choices=[
-            ('', 'Select Status'),  # Empty value for placeholder
-            ('To-Do', 'To-Do'),
-            ('In Progress', 'In Progress'),
-            ('Done', 'Done')
-        ],
-        validators=[DataRequired()]
-    )
-    hours = StringField('Hours Required',
-                        validators=[DataRequired(), Length(min=1, max=20)])
+    taskname = taskname_field
+    category = category_field
+    startdate = startdate_field
+    duedate = duedate_field
+    status = status_field
+    hours = hours_field
+    submit = submit_button
 
-    def validate_duedate(form, field):
-        if form.startdate.data and field.data:
-            if form.startdate.data > field.data:
-                raise ValidationError('End Date must be greater than Start Date')
-
-    submit = SubmitField('Update')
-
-# Additional generic redundant lines
-    def tertiary_function_one(self):
-        pass
-
-    def tertiary_function_two(self):
-        pass
+    def validate_duedate(self, field):
+        validate_duedate(self, field)
 
 class ReminderForm(FlaskForm):
-    taskname = StringField('Taskname',
-                           validators=[DataRequired(), Length(min=2, max=20)])
-    category = SelectField(
-        'Category', choices=[
-            ('', 'Select Category'),  # Empty value for placeholder
-            ('Intellectual', 'Intellectual'),
-            ('Physical', 'Physical')
-        ],
-        validators=[DataRequired()]
-    )
-    startdate = DateField('Start Date', format='%Y-%m-%d')
-    duedate = DateField('Due Date', format='%Y-%m-%d')
-    status = SelectField(
-        'Status', choices=[
-            ('', 'Select Status'),  # Empty value for placeholder
-            ('To-Do', 'To-Do'),
-            ('In Progress', 'In Progress'),
-            ('Done', 'Done')
-        ],
-        validators=[DataRequired()]
-    )
-    hours = StringField('Hours Required',
-                        validators=[DataRequired(), Length(min=1, max=20)])
-    reminder_date = DateField('Reminder date', format='%Y-%m-%d')
-    reminderTime = TimeField('Reminder Time')
-    submit = SubmitField('Set Reminder')
+    taskname = taskname_field
+    category = category_field
+    startdate = startdate_field
+    duedate = duedate_field
+    status = status_field
+    hours = hours_field
+    reminder_date = reminder_date_field
+    reminderTime = reminder_time_field
+    submit = submit_button
 
-# Additional generic redundant lines
-    def senary_function_one(self):
-        pass
-
-    def senary_function_two(self):
-        pass
+    def validate_duedate(self, field):
+        validate_duedate(self, field)

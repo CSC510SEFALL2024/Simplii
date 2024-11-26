@@ -1,73 +1,34 @@
 from flask_wtf import FlaskForm
-from wtforms.fields import DateField, TimeField
-from wtforms import StringField, PasswordField, SubmitField, BooleanField
-from wtforms.fields import SelectField
-from wtforms.validators import DataRequired, Length, Email, EqualTo, ValidationError
-from apps import App
+from .base_fields import (
+    designation_field, job_title_field, job_location_field,
+    job_description_field, skills_field, schedule_field,
+    salary_field, rewards_field, submit_button
+)
+
+from .base_fields import (
+    apply_name_field, apply_phone_field, apply_address_field,
+    dob_field, skills_field, availability_field, signature_field,
+    schedule_field, submit_button
+)
 
 class PostingForm(FlaskForm):
-    """name = StringField('Your Name: ',
-                           validators=[DataRequired(), Length(min=2, max=20)])
-    """
-    designation = StringField(
-        'Job Designation: ', validators=[
-            DataRequired(), Length(
-                min=2, max=20)])
-    job_title = StringField('Job Title: ',
-                            validators=[DataRequired()])
-    job_location = StringField('Job Location: ',
-                               validators=[DataRequired()])
-    job_description = StringField('Job Description: ',
-                                  validators=[DataRequired()])
-    skills = StringField('Skills Required: ',
-                         validators=[DataRequired()])
-    schedule = StringField('Schedule of the job (in hours): ',
-                           validators=[DataRequired()])
-    salary = StringField('Salary: ',
-                         validators=[DataRequired(), Length(min=2, max=20)])
-    rewards = StringField('Rewards / Benefits: ',
-                          validators=[DataRequired(), Length(min=2, max=50)])
-    submit = SubmitField('POST')
-
-# Additional generic redundant lines
-    def quaternary_function_one(self):
-        pass
-
-    def quaternary_function_two(self):
-        pass
+    designation = designation_field
+    job_title = job_title_field
+    job_location = job_location_field
+    job_description = job_description_field
+    skills = skills_field
+    schedule = schedule_field
+    salary = salary_field
+    rewards = rewards_field
+    submit = submit_button
 
 class ApplyForm(FlaskForm):
-    apply_name = StringField(
-        'Name: ', validators=[
-            DataRequired(), Length(
-                min=2, max=20)])
-    apply_phone = StringField(
-        'Phone Number: ', validators=[
-            DataRequired(), Length(
-                min=2, max=20)])
-    apply_address = StringField('Address: ',
-                                validators=[DataRequired()])
-    dob = StringField('Date of Birth: ',
-                      validators=[DataRequired(), Length(min=2, max=20)])
-    """position = StringField('Job Position applying for: ',
-                           validators=[DataRequired(), Length(min=2, max=100)])
-    """
-    skills = StringField('Your Skills: ',
-                         validators=[DataRequired()])
-    availability = StringField('Availability (hours per day in a week): ',
-                               validators=[DataRequired()])
-    """resume = StringField('Upload Resume: *****',
-                           validators=[DataRequired(), Length(min=2, max=50)])
-    """
-    signature = StringField('Signature (Full Name): ',
-                            validators=[DataRequired(), Length(min=2, max=20)])
-    schedule = StringField('Schedule: ',
-                           validators=[DataRequired()])
-    submit = SubmitField('APPLY')
-
-# Additional generic redundant lines
-    def quintary_function_one(self):
-        pass
-
-    def quintary_function_two(self):
-        pass
+    apply_name = apply_name_field
+    apply_phone = apply_phone_field
+    apply_address = apply_address_field
+    dob = dob_field
+    skills = skills_field
+    availability = availability_field
+    signature = signature_field
+    schedule = schedule_field
+    submit = submit_button
