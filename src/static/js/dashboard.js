@@ -9,15 +9,16 @@ $(document).ready(function () {
             rowData.push($(this).text());
         });
         data.push(rowData);
-    });                                                 
+    });
 
     // Handle filter changes
-    $("#ddlStatus,#ddlCategory,#ddlShow").on("change", function () {
+    $("#ddlStatus, #ddlCategory, #ddlPriority, #ddlShow").on("change", function () {
         var Status = $('#ddlStatus').find("option:selected").val();
         var Category = $('#ddlCategory').find("option:selected").val();
+        var Priority = $('#ddlPriority').find("option:selected").val(); // Get selected Priority
         var Show = $('#ddlShow').find("option:selected").val();
-        console.log(Status, Category, Show);
-        SearchData(Show, Status, Category)
+        console.log(Status, Category, Priority, Show);
+        SearchData(Show, Status, Category, Priority); // Pass Priority to SearchData function
     });
 
     // Handle CSV export
@@ -27,42 +28,43 @@ $(document).ready(function () {
     });
 });
 
+
 // Search/filter function
-function SearchData(Show, Status, Category) {
-    if (Status.toUpperCase() == 'ALL' && Category.toUpperCase() == 'ALL') {
-        // Show all rows if both Status and Category are 'ALL'
+function SearchData(Show, Status, Category, Priority) {
+    if (Status.toUpperCase() == 'ALL' && Category.toUpperCase() == 'ALL' && Priority.toUpperCase() == 'ALL') {
+        // Show all rows if Status, Category, and Priority are 'ALL'
         $('#myTable tbody tr').show();
     } else {
         $('#myTable tbody tr:has(td)').each(function () {
-            var rowStatus = $.trim($(this).find('td:eq(1)').text());
-            var rowCategory = $.trim($(this).find('td:eq(2)').text());
+            var rowStatus = $.trim($(this).find('td:eq(1)').text());   // Status column
+            var rowCategory = $.trim($(this).find('td:eq(2)').text()); // Category column
+            var rowPriority = $.trim($(this).find('td:eq(3)').text()); // Priority column
 
-            if (Status.toUpperCase() != 'ALL' && Category.toUpperCase() != 'ALL') {
-                if (rowStatus.toUpperCase() == Status.toUpperCase() && rowCategory == Category) {
+            // Check if the row matches the selected filters
+            if (Status.toUpperCase() != 'ALL' && Category.toUpperCase() != 'ALL' && Priority.toUpperCase() != 'ALL') {
+                if (rowStatus.toUpperCase() == Status.toUpperCase() && rowCategory == Category && rowPriority.toUpperCase() == Priority.toUpperCase()) {
                     $(this).show();
                 } else {
                     $(this).hide();
                 }
-            } else if ($(this).find('td:eq(1)').text() != '' || $(this).find('td:eq(1)').text() != '') {
-                if (Status != 'all') {
-                    if (rowStatus.toUpperCase() == Status.toUpperCase()) {
-                        $(this).show();
-                    } else {
-                        $(this).hide();
-                    }
+            } else {
+                // Show rows based on any one filter (Status, Category, or Priority)
+                if (Status != 'all' && rowStatus.toUpperCase() == Status.toUpperCase()) {
+                    $(this).show();
                 }
-                if (Category != 'all') {
-                    if (rowCategory == Category) {
-                        $(this).show();
-                    } else {
-                        $(this).hide();
-                    }
+                if (Category != 'all' && rowCategory == Category) {
+                    $(this).show();
                 }
+                if (Priority != 'all' && rowPriority.toUpperCase() == Priority.toUpperCase()) {
+                    $(this).show();
+                }
+                $(this).hide(); // Hide rows that don't match the filters
             }
         });
         $('#myTable tbody tr:visible:gt(' + (Show - 1) + ')').hide();
     }
 }
+
 
 // CSV export functions
 function exportTableToCSV(filename) {
