@@ -259,5 +259,56 @@ class MockApplicationTestCase(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertIn(b'fa-sun', response.data)
 
+    #  Test cases for add csv function.
+    @patch('flask.Flask.test_client')
+    def test_csv_export(self, mock_test_client):
+        """Test CSV export endpoint"""
+        mock_test_client().get.return_value.status_code = 200
+        mock_test_client().get.return_value.headers = {
+            'Content-Type': 'text/csv',
+            'Content-Disposition': 'attachment; filename=tasks.csv'
+        }
+        response = mock_test_client().get('/export_csv')
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.headers.get('Content-Type'), 'text/csv')
+        self.assertIn('attachment; filename=tasks.csv', response.headers.get('Content-Disposition', ''))
+
+    @patch('flask.Flask.test_client')
+    def test_csv_export_filtered_by_status(self, mock_test_client):
+        """Test CSV export with status filter"""
+        mock_test_client().get.return_value.status_code = 200
+        response = mock_test_client().get('/export_csv?status=To-Do')
+        self.assertEqual(response.status_code, 200)
+
+    @patch('flask.Flask.test_client')
+    def test_csv_export_filtered_by_category(self, mock_test_client):
+        """Test CSV export with category filter"""
+        mock_test_client().get.return_value.status_code = 200
+        response = mock_test_client().get('/export_csv?category=Intellectual')
+        self.assertEqual(response.status_code, 200)
+
+    @patch('flask.Flask.test_client')
+    def test_csv_export_with_limit(self, mock_test_client):
+        """Test CSV export with task limit"""
+        mock_test_client().get.return_value.status_code = 200
+        response = mock_test_client().get('/export_csv?limit=5')
+        self.assertEqual(response.status_code, 200)
+
+    @patch('flask.Flask.test_client')
+    def test_csv_export_invalid_filter(self, mock_test_client):
+        """Test CSV export with invalid filter"""
+        mock_test_client().get.return_value.status_code = 400
+        response = mock_test_client().get('/export_csv?invalid_filter=value')
+        self.assertEqual(response.status_code, 400)
+
+    @patch('flask.Flask.test_client')
+    def test_csv_export_no_tasks(self, mock_test_client):
+        """Test CSV export when no tasks exist"""
+        mock_test_client().get.return_value.status_code = 200
+        mock_test_client().get.return_value.data = b''
+        response = mock_test_client().get('/export_csv')
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.data), 0)
+
 if __name__ == '__main__':
     unittest.main()
