@@ -196,7 +196,7 @@ class MockApplicationTestCase(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
 
     #Test cases for dark mode feature
-        @patch('flask.Flask.test_client')
+    @patch('flask.Flask.test_client')
     def test_theme_toggle_button_presence(self, mock_test_client):
         """Verify that the theme toggle button is present in the rendered HTML."""
         mock_test_client().get.return_value.status_code = 200
