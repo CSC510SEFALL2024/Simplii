@@ -226,7 +226,7 @@ Simplii is a versatile task management application available on both web and And
 ## Team Members
 
 - **Anurag Gorkar** - AnuragGorkar
-- **Aryan Iguva** - aryansharma2k2
+- **Aryan Inguva** - aryansharma2k2
 - **Harsh Vora** - harshvora7
 
 ## Contribution
