@@ -53,6 +53,18 @@
                     </select>
                 </div>
             </div>
+
+            <div class="col-sm-4">
+                <div class="form-group">
+                    <label for="ddlPriority">Priority</label>
+                    <select class="form-control" id="ddlPriority">
+                        <option value="all">Select priority</option>
+                        <option value="High">High</option>
+                        <option value="Medium">Medium</option>
+                        <option value="Low">Low</option>
+                    </select>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -149,6 +161,7 @@ $(document).ready(function() {
     function filterTable() {
     const status = $('#ddlStatus').val();
     const category = $('#ddlCategory').val();
+    const priority = $('#ddlPriority').val();
     const limit = parseInt($('#ddlShow').val()) || 'all';
 
     $('#myTable tbody tr').each(function() {
@@ -159,9 +172,11 @@ $(document).ready(function() {
 
         const statusMatch = status === 'all' || rowStatus === status;
         const categoryMatch = category === 'all' || rowCategory === category;
+        const priorityMatch = priority === 'all' || rowPriority === priority;
+
         
         // Apply filters to status, category, and priority
-        $row.toggle(statusMatch && categoryMatch);
+        $row.toggle(statusMatch && categoryMatch && priorityMatch);
     });
 
     if (limit !== 'all') {
@@ -171,7 +186,7 @@ $(document).ready(function() {
 
 
     // Attach filter handlers
-    $('#ddlStatus, #ddlCategory, #ddlShow').on('change', filterTable);
+    $('#ddlStatus, #ddlCategory, #ddlShow, #ddlPriority').on('change', filterTable);
 
     // CSV Export
     $('#exportCSV').click(function() {
