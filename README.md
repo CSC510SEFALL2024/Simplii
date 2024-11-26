@@ -26,9 +26,9 @@
 <img src="https://img.shields.io/github/issues-pr/CSC510SEFALL2024/Simplii?style=flat-square" alt="Simplii pull-requests"/>
 </a>
 
-# Simplii 5.0
+# Simplii 6.0
 
-<h3>Are you trying to manage tasks? Simplii keep track of them, with all new Simplii 5.0!!! </h3>
+<h3>Are you trying to manage tasks? Simplii keep track of them, with all new Simplii 6.0!!! </h3>
 
 Simplii is a versatile task management application available on both web and Android platforms. It offers a seamless experience for managing tasks efficiently.
 
