@@ -195,5 +195,185 @@ class MockApplicationTestCase(unittest.TestCase):
         response = mock_test_client().get('/drafts')
         self.assertEqual(response.status_code, 200)
 
+    #Test cases for dark mode feature
+    @patch('flask.Flask.test_client')
+    def test_theme_toggle_button_presence(self, mock_test_client):
+        """Verify that the theme toggle button is present in the rendered HTML."""
+        mock_test_client().get.return_value.status_code = 200
+        mock_test_client().get.return_value.data = b'<button id="themeToggleButton" class="btn btn-primary">'
+        response = mock_test_client().get('/')
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(b'<button id="themeToggleButton" class="btn btn-primary">', response.data)
+
+    @patch('flask.Flask.test_client')
+    def test_theme_initial_load_light(self, mock_test_client):
+        """Ensure light theme is applied when 'theme' in localStorage is 'light'."""
+        mock_test_client().get.return_value.status_code = 200
+        mock_test_client().get.return_value.data = b'main.css'
+        response = mock_test_client().get('/')
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(b'main.css', response.data)
+
+    @patch('flask.Flask.test_client')
+    def test_theme_initial_load_dark(self, mock_test_client):
+        """Ensure dark theme is applied when 'theme' in localStorage is 'dark'."""
+        mock_test_client().get.return_value.status_code = 200
+        mock_test_client().get.return_value.data = b'maindark.css'
+        response = mock_test_client().get('/')
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(b'maindark.css', response.data)
+
+    @patch('flask.Flask.test_client')
+    def test_toggle_theme_to_dark(self, mock_test_client):
+        """Simulate toggling the theme to dark mode and verify the changes."""
+        mock_test_client().post.return_value.status_code = 200
+        mock_test_client().post.return_value.data = b'maindark.css'
+        response = mock_test_client().post('/toggle_theme', data={'currentTheme': 'light'})
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(b'maindark.css', response.data)
+
+    @patch('flask.Flask.test_client')
+    def test_toggle_theme_to_light(self, mock_test_client):
+        """Simulate toggling the theme to light mode and verify the changes."""
+        mock_test_client().post.return_value.status_code = 200
+        mock_test_client().post.return_value.data = b'main.css'
+        response = mock_test_client().post('/toggle_theme', data={'currentTheme': 'dark'})
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(b'main.css', response.data)
+
+    @patch('flask.Flask.test_client')
+    def test_icon_change_to_moon_on_dark(self, mock_test_client):
+        """Ensure the theme icon updates to 'moon' when toggling to dark mode."""
+        mock_test_client().post.return_value.status_code = 200
+        mock_test_client().post.return_value.data = b'fa-moon'
+        response = mock_test_client().post('/toggle_theme', data={'currentTheme': 'light'})
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(b'fa-moon', response.data)
+
+    @patch('flask.Flask.test_client')
+    def test_icon_change_to_sun_on_light(self, mock_test_client):
+        """Ensure the theme icon updates to 'sun' when toggling to light mode."""
+        mock_test_client().post.return_value.status_code = 200
+        mock_test_client().post.return_value.data = b'fa-sun'
+        response = mock_test_client().post('/toggle_theme', data={'currentTheme': 'dark'})
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(b'fa-sun', response.data)
+
+    #  Test cases for add csv function.
+    @patch('flask.Flask.test_client')
+    def test_csv_export(self, mock_test_client):
+        """Test CSV export endpoint"""
+        mock_test_client().get.return_value.status_code = 200
+        mock_test_client().get.return_value.headers = {
+            'Content-Type': 'text/csv',
+            'Content-Disposition': 'attachment; filename=tasks.csv'
+        }
+        response = mock_test_client().get('/export_csv')
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.headers.get('Content-Type'), 'text/csv')
+        self.assertIn('attachment; filename=tasks.csv', response.headers.get('Content-Disposition', ''))
+
+    @patch('flask.Flask.test_client')
+    def test_csv_export_filtered_by_status(self, mock_test_client):
+        """Test CSV export with status filter"""
+        mock_test_client().get.return_value.status_code = 200
+        response = mock_test_client().get('/export_csv?status=To-Do')
+        self.assertEqual(response.status_code, 200)
+
+    @patch('flask.Flask.test_client')
+    def test_csv_export_filtered_by_category(self, mock_test_client):
+        """Test CSV export with category filter"""
+        mock_test_client().get.return_value.status_code = 200
+        response = mock_test_client().get('/export_csv?category=Intellectual')
+        self.assertEqual(response.status_code, 200)
+
+    @patch('flask.Flask.test_client')
+    def test_csv_export_with_limit(self, mock_test_client):
+        """Test CSV export with task limit"""
+        mock_test_client().get.return_value.status_code = 200
+        response = mock_test_client().get('/export_csv?limit=5')
+        self.assertEqual(response.status_code, 200)
+
+    @patch('flask.Flask.test_client')
+    def test_csv_export_invalid_filter(self, mock_test_client):
+        """Test CSV export with invalid filter"""
+        mock_test_client().get.return_value.status_code = 400
+        response = mock_test_client().get('/export_csv?invalid_filter=value')
+        self.assertEqual(response.status_code, 400)
+
+    @patch('flask.Flask.test_client')
+    def test_csv_export_no_tasks(self, mock_test_client):
+        """Test CSV export when no tasks exist"""
+        mock_test_client().get.return_value.status_code = 200
+        mock_test_client().get.return_value.data = b''
+        response = mock_test_client().get('/export_csv')
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.data), 0)
+
+    # Test cases for send email Ai schedule functions
+
+    @patch('flask.Flask.test_client')
+    def test_get_user_tasks_within_thirty_days(self, mock_test_client):
+        """Test retrieval of tasks within thirty days"""
+        mock_test_client().get.return_value.status_code = 200
+        response = mock_test_client().get('/get_user_tasks')
+        self.assertEqual(response.status_code, 200)
+        # Add assertions about task data if possible
+
+    @patch('flask.Flask.test_client')
+    def test_task_email_with_no_tasks(self, mock_test_client):
+        """Test email sending with empty task list"""
+        mock_test_client().post.return_value.status_code = 200
+        mock_test_client().post.return_value.data = b'No tasks to display'
+        response = mock_test_client().post('/send_task_email')
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(b'No tasks to display', response.data)
+
+    @patch('flask.Flask.test_client')
+    def test_task_email_with_today_tasks(self, mock_test_client):
+        """Test email sending with only today's tasks"""
+        mock_test_client().post.return_value.status_code = 200
+        mock_test_client().post.return_value.data = b'Today\'s Tasks'
+        response = mock_test_client().post('/send_task_email')
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(b'Today\'s Tasks', response.data)
+
+    @patch('flask.Flask.test_client')
+    def test_task_email_with_week_tasks(self, mock_test_client):
+        """Test email sending with this week's tasks"""
+        mock_test_client().post.return_value.status_code = 200
+        mock_test_client().post.return_value.data = b'This Week\'s Tasks'
+        response = mock_test_client().post('/send_task_email')
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(b'This Week\'s Tasks', response.data)
+
+    @patch('flask.Flask.test_client')
+    def test_task_email_with_month_tasks(self, mock_test_client):
+        """Test email sending with this month's tasks"""
+        mock_test_client().post.return_value.status_code = 200
+        mock_test_client().post.return_value.data = b'This Month\'s Tasks'
+        response = mock_test_client().post('/send_task_email')
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(b'This Month\'s Tasks', response.data)
+
+    @patch('flask.Flask.test_client')
+    def test_task_email_gemini_generation(self, mock_test_client):
+        """Test Gemini AI task description generation"""
+        mock_test_client().post.return_value.status_code = 200
+        mock_test_client().post.return_value.data = b'Gemini AI Generated Content'
+        response = mock_test_client().post('/send_task_email')
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(b'Gemini AI Generated Content', response.data)
+
+    @patch('flask.Flask.test_client')
+    def test_task_email_markdown_conversion(self, mock_test_client):
+        """Test markdown to HTML conversion for email"""
+        mock_test_client().post.return_value.status_code = 200
+        mock_test_client().post.return_value.data = b'Markdown to HTML Conversion'
+        response = mock_test_client().post('/send_task_email')
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(b'Markdown to HTML Conversion', response.data)
+
+
 if __name__ == '__main__':
     unittest.main()

@@ -2,15 +2,16 @@
 {% block content %}
 <div class="card status-card col-md">
     <div class="card-body">
-        <!-- Use d-flex to align items on the same line, justify-content-between to space them out -->
         <div class="d-flex justify-content-between align-items-center">
-            <!-- Title aligned to the left -->
             <h3 class="card-title mb-0">All Tasks</h3>
-    
-            <!-- Export button aligned to the right with an icon -->
-            <button id="exportCSV" class="btn btn-primary">
-                <i class="fas fa-download"></i> Export to CSV
-            </button>
+            <div class="btn-group">
+                <button id="exportCSV" class="btn btn-primary me-2">
+                    <i class="fas fa-download"></i> Export to CSV
+                </button>
+                <button id="sendTaskEmail" class="btn btn-success">
+                    <i class="fas fa-envelope"></i> Send Schedule
+                </button>
+            </div>
         </div>
     </div>
 
@@ -101,6 +102,29 @@
     </div>
 </div>
 
+<div class="modal fade" id="emailSentModal" tabindex="-1" aria-labelledby="emailSentModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content bg-steel text-white">
+            <!-- Modal Header -->
+            <div class="modal-header nav-color text-white">
+                <h5 class="modal-title" id="emailSentModalLabel">Email Status</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+
+            <!-- Modal Body -->
+            <div class="modal-body task-item">
+                <p id="emailStatusMessage"></p>
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="modal-footer bg-steel">
+                <button type="button" class="btn btn-outline-light" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
 <!-- Include modern jQuery version -->
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script>
@@ -184,6 +208,55 @@ $(document).ready(function() {
         document.body.removeChild(a);
         window.URL.revokeObjectURL(url);
     });
+
+
+    // Frontend JavaScript - Button click handler
+$('#sendTaskEmail').click(function() {
+    const button = $(this);
+    const modalBody = $('#emailStatusMessage');
+    
+    // Disable button and show loading state
+    button.prop('disabled', true);
+    button.html(' Sending...');
+    
+    // Show loading in modal
+    modalBody.html(`
+        <div class="text-center">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <p class="mt-3">Generating your personalized schedule...</p>
+        </div>
+    `);
+    
+    $('#emailSentModal').modal('show');
+    
+    $.ajax({
+        url: '/send_task_email',
+        method: 'POST',
+        success: function(response) {
+            modalBody.html(`
+                <div class="text-center">
+                    <i class="fas fa-check-circle text-success fa-3x"></i>
+                    <p class="mt-3">Task schedule has been sent to your email!</p>
+                </div>
+            `);
+        },
+        error: function(xhr) {
+            const errorMsg = xhr.responseJSON?.error || 'Failed to send email. Please try again.';
+            modalBody.html(`
+                <div class="text-center">
+                    <i class="fas fa-times-circle text-danger fa-3x"></i>
+                    <p class="mt-3">${errorMsg}</p>
+                </div>
+            `);
+        },
+        complete: function() {
+            button.prop('disabled', false);
+            button.html(' Send Schedule');
+        }
+    });
+});
 });
 </script>
 {% endblock content %}
