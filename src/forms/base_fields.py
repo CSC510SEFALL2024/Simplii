@@ -44,6 +44,16 @@ reminder_date_field = DateField(
     format='%Y-%m-%d'
 )
 
+priority_field = SelectField(
+        'Priority', choices=[
+            ('', 'Select Priority'),
+            ('High', 'High'),
+            ('Medium', 'Medium'),
+            ('Low', 'Low')
+        ],
+        validators=[DataRequired()]
+    )
+
 #User Fields
 username_field = StringField(
     'Username',

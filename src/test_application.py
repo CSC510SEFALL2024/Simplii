@@ -375,5 +375,78 @@ class MockApplicationTestCase(unittest.TestCase):
         self.assertIn(b'Markdown to HTML Conversion', response.data)
 
 
+    @patch('flask.Flask.test_client')
+    def test_task_update(self, mock_test_client):
+        """Test updating a task"""
+        mock_test_client().post.return_value.status_code = 200
+        response = mock_test_client().post('/update_task', data={'task_id': '456', 'task_name': 'Updated Task'})
+        self.assertEqual(response.status_code, 200)
+
+    @patch('flask.Flask.test_client')
+    def test_task_priority_update(self, mock_test_client):
+        """Test updating task priority"""
+        mock_test_client().post.return_value.status_code = 200
+        response = mock_test_client().post('/update_task', data={'task_id': '789', 'priority': 'High'})
+        self.assertEqual(response.status_code, 200)
+
+    @patch('flask.Flask.test_client')
+    def test_task_category_update(self, mock_test_client):
+        """Test updating task category"""
+        mock_test_client().post.return_value.status_code = 200
+        response = mock_test_client().post('/update_task', data={'task_id': '321', 'category': 'Work'})
+        self.assertEqual(response.status_code, 200)
+
+    @patch('flask.Flask.test_client')
+    def test_dashboard_task_listing(self, mock_test_client):
+        """Test listing tasks on the dashboard"""
+        mock_test_client().get.return_value.status_code = 200
+        mock_test_client().get.return_value.data = b'Tasks'
+        response = mock_test_client().get('/dashboard')
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(b'Tasks', response.data)
+
+    @patch('flask.Flask.test_client')
+    def test_fetch_tasks_with_status(self, mock_test_client):
+        """Test fetching tasks with a status filter"""
+        mock_test_client().get.return_value.status_code = 200
+        response = mock_test_client().get('/fetchTasks?status=Completed')
+        self.assertEqual(response.status_code, 200)
+
+    @patch('flask.Flask.test_client')
+    def test_admin_task_management(self, mock_test_client):
+        """Test managing tasks from the admin dashboard"""
+        mock_test_client().post.return_value.status_code = 200
+        response = mock_test_client().post('/admin/manage_tasks', data={'task_id': '101', 'action': 'complete'})
+        self.assertEqual(response.status_code, 200)
+
+    @patch('flask.Flask.test_client')
+    def test_search_no_results(self, mock_test_client):
+        """Test search functionality with no results"""
+        mock_test_client().get.return_value.status_code = 200
+        mock_test_client().get.return_value.data = b'No tasks found'
+        response = mock_test_client().get('/search', query_string={'query': 'Nonexistent'})
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(b'No tasks found', response.data)
+
+    @patch('flask.Flask.test_client')
+    def test_task_export_with_no_filter(self, mock_test_client):
+        """Test task export with no filters applied"""
+        mock_test_client().get.return_value.status_code = 200
+        mock_test_client().get.return_value.headers = {
+            'Content-Type': 'text/csv',
+            'Content-Disposition': 'attachment; filename=tasks.csv'
+        }
+        response = mock_test_client().get('/export_csv')
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.headers.get('Content-Type'), 'text/csv')
+        self.assertIn('attachment; filename=tasks.csv', response.headers.get('Content-Disposition', ''))
+
+    @patch('flask.Flask.test_client')
+    def test_task_export_with_invalid_limit(self, mock_test_client):
+        """Test task export with an invalid limit filter"""
+        mock_test_client().get.return_value.status_code = 400
+        response = mock_test_client().get('/export_csv?limit=invalid')
+        self.assertEqual(response.status_code, 400)
+
 if __name__ == '__main__':
     unittest.main()

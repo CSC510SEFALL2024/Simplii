@@ -27,6 +27,7 @@ $(document).ready(function(){
         var col1=currentRow.find("td:eq(0)").text(); // get current row 1st TD value
         var col2=currentRow.find("td:eq(1)").text(); // get current row 2nd TD
         var col3=currentRow.find("td:eq(2)").text(); // get current row 3rd TD
+        var col4=currentRow.find("td:eq(3)").text(); // get current row 4th TD
         console.log(col1);
         $.ajax({
             type: "POST",
@@ -34,7 +35,8 @@ $(document).ready(function(){
             data:{
                 "task":col1,
                 "status":col2,
-                "category":col3
+                "category":col3,
+                "priority":col4
             },
             success: function(response){
                 var url = "/dashboard"
@@ -55,6 +57,7 @@ $(document).ready(function(){
         var col1=currentRow.find("td:eq(0)").text(); // get current row 1st TD value
         var col2=currentRow.find("td:eq(1)").text(); // get current row 2nd TD
         var col3=currentRow.find("td:eq(2)").text(); // get current row 3rd TD
+        var col4=currentRow.find("td:eq(3)").text(); // get current row 4th TD
         console.log(col1);
         $.ajax({
             type: "POST",
@@ -62,10 +65,11 @@ $(document).ready(function(){
             data:{
                 "task":col1,
                 "status":col2,
-                "category":col3
+                "category":col3,
+                "priority":col4
             },success: function(response){
                 resdata = JSON.parse(response)
-                var url = "/schedule_reminder?taskname=" + resdata.taskname + "&category=" + resdata.category + "&startdate=" + resdata.startdate + "&duedate="+resdata.duedate+"&status="+resdata.status+"&hours="+resdata.hours;
+                var url = "/schedule_reminder?taskname=" + resdata.taskname + "&category=" + resdata.category + "&priority=" + resdata.priority + "&startdate=" + resdata.startdate + "&duedate="+resdata.duedate+"&status="+resdata.status+"&hours="+resdata.hours;
                 window.location.href = url;
             }
         })
@@ -83,6 +87,7 @@ $(document).ready(function(){
         var col1=currentRow.find("td:eq(0)").text(); // get current row 1st TD value
         var col2=currentRow.find("td:eq(1)").text(); // get current row 2nd TD
         var col3=currentRow.find("td:eq(2)").text(); // get current row 3rd TD
+        var col4=currentRow.find("td:eq(3)").text(); // get current row 4th TD
         console.log(col1, col2, col3);
         $.ajax({
             type: "POST",
@@ -90,11 +95,12 @@ $(document).ready(function(){
             data:{
                 "task":col1,
                 "status":col2,
-                "category":col3
+                "category":col3,
+                "priority":col4
             },
             success: function(response){
                 resdata = JSON.parse(response)
-                var url = "/updateTask?taskname=" + resdata.taskname + "&category=" + resdata.category + "&startdate=" + resdata.startdate + "&duedate="+resdata.duedate+"&status="+resdata.status+"&hours="+resdata.hours;
+                var url = "/updateTask?taskname=" + resdata.taskname + "&category=" + resdata.category + "&priority=" + resdata.priority + "&startdate=" + resdata.startdate + "&duedate="+resdata.duedate+"&status="+resdata.status+"&hours="+resdata.hours;
                 window.location.href = url;
             }
         })

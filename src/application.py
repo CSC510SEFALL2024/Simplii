@@ -25,7 +25,9 @@ from flask.helpers import make_response
 from flask.json import jsonify
 from flask_mail import Mail, Message
 from pymongo import ASCENDING
-from forms import ForgotPasswordForm, RegistrationForm, LoginForm, ResetPasswordForm, PostingForm, ApplyForm, TaskForm, UpdateForm,ReminderForm
+from forms.user_forms import ForgotPasswordForm, RegistrationForm, LoginForm, ResetPasswordForm
+from forms.task_forms import TaskForm, UpdateForm, ReminderForm
+from forms.job_forms import PostingForm, ApplyForm
 import bcrypt
 import os
 import csv
@@ -214,10 +216,10 @@ def fetch_tasks():
 
             tasksListContent = list(relevant_tasks)
 
-            table_html = "<table border='1'><tr><th>Task Name</th><th>Category</th><th>Start Date</th><th>Due Date</th><th>Status</th><th>Hours</th></tr>"
+            table_html = "<table border='1'><tr><th>Task Name</th><th>Category</th><th>Priority</th><th>Start Date</th><th>Due Date</th><th>Status</th><th>Hours</th></tr>"
             for user_tasks in tasksListContent:
                 # Create an HTML table from the task data
-                table_html += f"<tr><td>{user_tasks['taskname']}</td><td>{user_tasks['category']}</td><td>{user_tasks['startdate']}</td><td>{user_tasks['duedate']}</td><td>{user_tasks['status']}</td><td>{user_tasks['hours']}</td></tr>"
+                table_html += f"<tr><td>{user_tasks['taskname']}</td><td>{user_tasks['category']}</td><td>{user_tasks['priority']}</td><td>{user_tasks['startdate']}</td><td>{user_tasks['duedate']}</td><td>{user_tasks['status']}</td><td>{user_tasks['hours']}</td></tr>"
             table_html += "</table>"
 
             # Compose the email
@@ -409,12 +411,22 @@ def recommend():
     # ##########################
    
 
+    # Mapping for priority values
+    priority_mapping = {'High': 1, 'Medium': 2, 'Low': 3}
+
     if session.get('user_id'):
         user_str_id = session.get('user_id')
         user_id = ObjectId(user_str_id)
 
-        # Fetch all tasks for the user and sort by 'duedate' in ascending order
-        tasks = list(mongo.db.tasks.find({'user_id': user_id}).sort('duedate', ASCENDING))
+        # Fetch all tasks for the user
+        tasks = list(mongo.db.tasks.find({'user_id': user_id}))
+
+        # Sort tasks by 'duedate' and mapped 'priority'
+        tasks.sort(key=lambda task: (
+            task.get('duedate'),  # Sort by duedate first
+            priority_mapping.get(task.get('priority'), float('inf'))  # Map priority and handle missing values
+        ))
+
         return render_template('recommend.html', title='Recommend', tasks=tasks)
     else:
         return redirect(url_for('home'))
@@ -494,10 +506,10 @@ def send_email_reminders():
             relevant_tasks = list(relevant_tasks)
 
             # Create an HTML table from the task data
-            table_html = "<table border='1'><tr><th>Task Name</th><th>Category</th><th>Start Date</th><th>Due Date</th><th>Status</th><th>Hours</th></tr>"
+            table_html = "<table border='1'><tr><th>Task Name</th><th>Category</th><th>Priority</th><th>Start Date</th><th>Due Date</th><th>Status</th><th>Hours</th></tr>"
 
             for task in relevant_tasks:
-                table_html += f"<tr><td>{task['taskname']}</td><td>{task['category']}</td><td>{task['startdate']}</td><td>{task['duedate']}</td><td>{task['status']}</td><td>{task['hours']}</td></tr>"
+                table_html += f"<tr><td>{task['taskname']}</td><td>{task['category']}</td><td>{task['priority']}</td><td>{task['startdate']}</td><td>{task['duedate']}</td><td>{task['status']}</td><td>{task['hours']}</td></tr>"
 
             table_html += "</table>"
 
@@ -876,9 +888,10 @@ def deleteTask():
         task = request.form.get('task')
         status = request.form.get('status')
         category = request.form.get('category')
-        print("task, status, category ", task, status, category)
+        priority = request.form.get('priority')
+        print("task, status, category, priority ", task, status, category, priority)
         id = mongo.db.tasks.find_one(
-            {'user_id': user_id, 'taskname': task, 'status': status, 'category': category}, {'_id'})
+            {'user_id': user_id, 'taskname': task, 'status': status, 'category': category, 'priority': priority}, {'_id'})
         print("id in delete task ",id)
         mongo.db.tasks.delete_one({'_id': id['_id']})
         return "Success"
@@ -892,7 +905,7 @@ def task():
     # task() function displays the Add Task portal (task.html) template
     # route "/task" will redirect to task() function.
     # TaskForm() called and if the form is submitted then new task values are fetched and updated into database
-    # Input: Task, Category, start date, end date, number of hours
+    # Input: Task, Category, start date, end date, number of hours, priority
     # Output: Value update in database and redirected to home login page
     # ##########################
     if session.get('user_id'):
@@ -907,6 +920,7 @@ def task():
                 startdate = request.form.get('startdate')
                 duedate = request.form.get('duedate')
                 hours = request.form.get('hours')
+                priority = request.form.get('priority')
                 status = request.form.get('status')
                 task_id = mongo.db.tasks.insert_one({'user_id': user_id,
                                        'taskname': taskname,
@@ -914,7 +928,8 @@ def task():
                                        'startdate': startdate,
                                        'duedate': duedate,
                                        'status': status,
-                                       'hours': hours})
+                                       'hours': hours,
+                                       'priority': priority})
 
                 #Now update the user schema's TaskList field with the taskId(Basically append the new task id to that array)
                 user_document = mongo.db.users.find_one({'_id': user_id})
@@ -960,6 +975,7 @@ def scheduleReminder():
     form = ReminderForm()
     form.taskname.data = d['taskname']
     form.category.data = d['category']
+    form.priority.data = d['priority']
     form.status.data = d['status']
     form.hours.data = d['hours']
     form.startdate.data = d['startdate']
@@ -974,6 +990,7 @@ def scheduleReminder():
         startdate = form.startdate.data
         duedate = form.duedate.data
         category = form.category.data
+        priority = form.priority.data
         reminder_date = request.form.get('reminder_date')
         reminder_time_str = request.form.get('reminderTime')
 
@@ -986,6 +1003,7 @@ def scheduleReminder():
             'task_id': task_id,
             'taskname': taskname,
             'category': category,
+            'priority': priority,
             'startdate':startdate,
             'duedate':duedate,
             'reminder_date': reminder_date_str,
@@ -1092,10 +1110,11 @@ def editTask():
         task = request.form.get('task')
         status = request.form.get('status')
         category = request.form.get('category')
+        priority = request.form.get('priority')
         id = mongo.db.tasks.find_one(
-            {'user_id': user_id, 'taskname': task, 'status': status, 'category': category})
+            {'user_id': user_id, 'taskname': task, 'status': status, 'category': category, 'priority':priority})
         print("id in edit task ", id)
-        return json.dumps({'taskname': id['taskname'], 'category': id['category'], 'startdate': id['startdate'], 'duedate': id['duedate'], 'status': id['status'], 'hours': id['hours']}), 200, {
+        return json.dumps({'taskname': id['taskname'], 'category': id['category'], 'priority': id['priority'], 'startdate': id['startdate'], 'duedate': id['duedate'], 'status': id['status'], 'hours': id['hours']}), 200, {
             'ContentType': 'application/json'}
     else:
         return "Failed"
@@ -1138,6 +1157,7 @@ def updateTask():
 
         form.taskname.data = d['taskname']
         form.category.data = d['category']
+        form.priority.data = d['priority']
         form.status.data = d['status']
         form.hours.data = d['hours']
         
@@ -1160,12 +1180,13 @@ def updateTask():
                 user_id = ObjectId(user_str_id)
                 taskname = request.form.get('taskname')
                 category = request.form.get('category')
+                priority = request.form.get('priority')
                 startdate = request.form.get('startdate')
                 duedate = request.form.get('duedate')
                 hours = request.form.get('hours')
                 status = request.form.get('status')
-                mongo.db.tasks.update_one({'user_id': user_id, 'taskname': d['taskname'], 'startdate': d['startdate'], 'duedate': d['duedate']},
-                                      {'$set': {'taskname': taskname, 'startdate': startdate, 'duedate': duedate, 'category': category, 'status': status, 'hours': hours}})
+                mongo.db.tasks.update_one({'user_id': user_id, 'taskname': d['taskname'], 'startdate': d['startdate'], 'priority': d['priority'], 'duedate': d['duedate']},
+                                      {'$set': {'taskname': taskname, 'startdate': startdate, 'duedate': duedate, 'category': category, 'priority': priority, 'status': status, 'hours': hours}})
             flash(f' {form.taskname.data} Task Updated!', 'success')
             return redirect(url_for('dashboard'))
     else:
