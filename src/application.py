@@ -25,7 +25,9 @@ from flask.helpers import make_response
 from flask.json import jsonify
 from flask_mail import Mail, Message
 from pymongo import ASCENDING
-from forms import ForgotPasswordForm, RegistrationForm, LoginForm, ResetPasswordForm, PostingForm, ApplyForm, TaskForm, UpdateForm,ReminderForm
+from forms.user_forms import ForgotPasswordForm, RegistrationForm, LoginForm, ResetPasswordForm
+from forms.task_forms import TaskForm, UpdateForm,ReminderForm
+from forms.job_forms import PostingForm, ApplyForm
 import bcrypt
 import os
 import csv
@@ -409,12 +411,22 @@ def recommend():
     # ##########################
    
 
+    # Mapping for priority values
+    priority_mapping = {'High': 1, 'Medium': 2, 'Low': 3}
+
     if session.get('user_id'):
         user_str_id = session.get('user_id')
         user_id = ObjectId(user_str_id)
 
-        # Fetch all tasks for the user and sort by 'duedate' in ascending order
-        tasks = list(mongo.db.tasks.find({'user_id': user_id}).sort({'duedate':1, 'priority':1}))
+        # Fetch all tasks for the user
+        tasks = list(mongo.db.tasks.find({'user_id': user_id}))
+
+        # Sort tasks by 'duedate' and mapped 'priority'
+        tasks.sort(key=lambda task: (
+            task.get('duedate'),  # Sort by duedate first
+            priority_mapping.get(task.get('priority'), float('inf'))  # Map priority and handle missing values
+        ))
+
         return render_template('recommend.html', title='Recommend', tasks=tasks)
     else:
         return redirect(url_for('home'))
