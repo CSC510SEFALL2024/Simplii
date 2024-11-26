@@ -64,6 +64,7 @@
                     <th>Task</th>
                     <th data-sortable="true">Status</th>
                     <th data-sortable="true">Category</th>
+                    <th data-sortable="true">Priority</th>
                     <th>Start Date</th>
                     <th>Due Date</th>
                     <th>Actions</th>
@@ -73,11 +74,9 @@
                 {% for item in tasks %}
                 <tr>
                     <td>{{ item['taskname'] }}</td>
-                    <td class="status-cell" 
-                        data-status="{{ item['status'] }}">
-                        {{ item['status'] }}
-                    </td>
+                    <td class="status-cell" data-status="{{ item['status'] }}">{{ item['status'] }}</td>
                     <td>{{ item['category'] }}</td>
+                    <td>{{ item['priority'] }}</td> 
                     <td>{{ item['startdate'] }}</td>
                     <td>{{ item['duedate'] }}</td>
                     <td>
@@ -148,25 +147,28 @@ $(document).ready(function() {
 
     // Handle filters
     function filterTable() {
-        const status = $('#ddlStatus').val();
-        const category = $('#ddlCategory').val();
-        const limit = parseInt($('#ddlShow').val()) || 'all';
+    const status = $('#ddlStatus').val();
+    const category = $('#ddlCategory').val();
+    const limit = parseInt($('#ddlShow').val()) || 'all';
 
-        $('#myTable tbody tr').each(function() {
-            const $row = $(this);
-            const rowStatus = $row.find('td:eq(1)').text().trim();
-            const rowCategory = $row.find('td:eq(2)').text().trim();
-            
-            const statusMatch = status === 'all' || rowStatus === status;
-            const categoryMatch = category === 'all' || rowCategory === category;
-            
-            $row.toggle(statusMatch && categoryMatch);
-        });
+    $('#myTable tbody tr').each(function() {
+        const $row = $(this);
+        const rowStatus = $row.find('td:eq(1)').text().trim();
+        const rowCategory = $row.find('td:eq(2)').text().trim();
+        const rowPriority = $row.find('td:eq(3)').text().trim(); // Priority value
 
-        if (limit !== 'all') {
-            $('#myTable tbody tr:visible').slice(limit).hide();
-        }
+        const statusMatch = status === 'all' || rowStatus === status;
+        const categoryMatch = category === 'all' || rowCategory === category;
+        
+        // Apply filters to status, category, and priority
+        $row.toggle(statusMatch && categoryMatch);
+    });
+
+    if (limit !== 'all') {
+        $('#myTable tbody tr:visible').slice(limit).hide();
     }
+}
+
 
     // Attach filter handlers
     $('#ddlStatus, #ddlCategory, #ddlShow').on('change', filterTable);

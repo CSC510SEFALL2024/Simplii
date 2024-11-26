@@ -876,9 +876,10 @@ def deleteTask():
         task = request.form.get('task')
         status = request.form.get('status')
         category = request.form.get('category')
-        print("task, status, category ", task, status, category)
+        priority = request.form.get('priority')
+        print("task, status, category, priority ", task, status, category, priority)
         id = mongo.db.tasks.find_one(
-            {'user_id': user_id, 'taskname': task, 'status': status, 'category': category}, {'_id'})
+            {'user_id': user_id, 'taskname': task, 'status': status, 'category': category, 'priority': priority}, {'_id'})
         print("id in delete task ",id)
         mongo.db.tasks.delete_one({'_id': id['_id']})
         return "Success"
@@ -892,7 +893,7 @@ def task():
     # task() function displays the Add Task portal (task.html) template
     # route "/task" will redirect to task() function.
     # TaskForm() called and if the form is submitted then new task values are fetched and updated into database
-    # Input: Task, Category, start date, end date, number of hours
+    # Input: Task, Category, start date, end date, number of hours, priority
     # Output: Value update in database and redirected to home login page
     # ##########################
     if session.get('user_id'):
@@ -907,6 +908,7 @@ def task():
                 startdate = request.form.get('startdate')
                 duedate = request.form.get('duedate')
                 hours = request.form.get('hours')
+                priority = request.form.get('priority')
                 status = request.form.get('status')
                 task_id = mongo.db.tasks.insert_one({'user_id': user_id,
                                        'taskname': taskname,
@@ -914,7 +916,8 @@ def task():
                                        'startdate': startdate,
                                        'duedate': duedate,
                                        'status': status,
-                                       'hours': hours})
+                                       'hours': hours,
+                                       'priority': priority})
 
                 #Now update the user schema's TaskList field with the taskId(Basically append the new task id to that array)
                 user_document = mongo.db.users.find_one({'_id': user_id})
@@ -1092,10 +1095,11 @@ def editTask():
         task = request.form.get('task')
         status = request.form.get('status')
         category = request.form.get('category')
+        priority = request.form.get('priority')
         id = mongo.db.tasks.find_one(
-            {'user_id': user_id, 'taskname': task, 'status': status, 'category': category})
+            {'user_id': user_id, 'taskname': task, 'status': status, 'category': category, 'priority':priority})
         print("id in edit task ", id)
-        return json.dumps({'taskname': id['taskname'], 'category': id['category'], 'startdate': id['startdate'], 'duedate': id['duedate'], 'status': id['status'], 'hours': id['hours']}), 200, {
+        return json.dumps({'taskname': id['taskname'], 'category': id['category'], 'priority': id['priority'], 'startdate': id['startdate'], 'duedate': id['duedate'], 'status': id['status'], 'hours': id['hours']}), 200, {
             'ContentType': 'application/json'}
     else:
         return "Failed"
