@@ -26,7 +26,7 @@ from flask.json import jsonify
 from flask_mail import Mail, Message
 from pymongo import ASCENDING
 from forms.user_forms import ForgotPasswordForm, RegistrationForm, LoginForm, ResetPasswordForm
-from forms.task_forms import TaskForm, UpdateForm,ReminderForm
+from forms.task_forms import TaskForm, UpdateForm, ReminderForm
 from forms.job_forms import PostingForm, ApplyForm
 import bcrypt
 import os
@@ -216,10 +216,10 @@ def fetch_tasks():
 
             tasksListContent = list(relevant_tasks)
 
-            table_html = "<table border='1'><tr><th>Task Name</th><th>Category</th><th>Start Date</th><th>Due Date</th><th>Status</th><th>Hours</th></tr>"
+            table_html = "<table border='1'><tr><th>Task Name</th><th>Category</th><th>Priority</th><th>Start Date</th><th>Due Date</th><th>Status</th><th>Hours</th></tr>"
             for user_tasks in tasksListContent:
                 # Create an HTML table from the task data
-                table_html += f"<tr><td>{user_tasks['taskname']}</td><td>{user_tasks['category']}</td><td>{user_tasks['startdate']}</td><td>{user_tasks['duedate']}</td><td>{user_tasks['status']}</td><td>{user_tasks['hours']}</td></tr>"
+                table_html += f"<tr><td>{user_tasks['taskname']}</td><td>{user_tasks['category']}</td><td>{user_tasks['priority']}</td><td>{user_tasks['startdate']}</td><td>{user_tasks['duedate']}</td><td>{user_tasks['status']}</td><td>{user_tasks['hours']}</td></tr>"
             table_html += "</table>"
 
             # Compose the email
