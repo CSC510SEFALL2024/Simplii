@@ -28,6 +28,9 @@
 
 # Simplii 6.0
 
+
+[Demo Video](https://youtu.be/eSssG-lNucM)
+
 <h3>Are you trying to manage tasks? Simplii keep track of them, with all new Simplii 6.0!!! </h3>
 
 Simplii is a versatile task management application available on both web and Android platforms. It offers a seamless experience for managing tasks efficiently.
