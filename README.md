@@ -128,7 +128,7 @@ Simplii is a versatile task management application available on both web and And
 
 ### Dashboard Filters
 <p> Dashboard's tasks listed can be filtered and viewed as per the user requirements. </p>
-<p align="center"><img width="700" src="./assets/filter.jpeg"></p>
+<p align="center"><img width="700" src="./assets/filters.jpeg"></p>
 
 ### User Interface About Page
 <p> When you click on the about on the navigation bar, you are redirected to a page that consists information about Simplii </p>
