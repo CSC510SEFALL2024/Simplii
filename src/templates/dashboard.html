@@ -11,6 +11,9 @@
                 <button id="sendTaskEmail" class="btn btn-success">
                     <i class="fas fa-envelope"></i> Send Schedule
                 </button>
+                <button id="copyToClipboard" class="btn btn-secondary">
+                    <i class="fas fa-copy"></i> Copy to Clipboard
+                </button>
             </div>
         </div>
     </div>
@@ -274,6 +277,39 @@ $('#sendTaskEmail').click(function() {
         }
     });
 });
+
+$('#copyToClipboard').click(function () {
+        const rows = [];
+        const headers = [];
+
+        // Get headers (excluding Actions column)
+        $('#myTable thead th').slice(0, -1).each(function () {
+            headers.push($(this).text().trim());
+        });
+        rows.push(headers.join('\t')); // Use tab for better clipboard formatting
+
+        // Get visible rows
+        $('#myTable tbody tr:visible').each(function () {
+            const rowData = [];
+            $(this).find('td').slice(0, -1).each(function () {
+                rowData.push($(this).text().trim());
+            });
+            rows.push(rowData.join('\t')); // Use tab as a separator
+        });
+
+        // Prepare data for clipboard
+        const clipboardData = rows.join('\n'); // New line separates rows
+
+        // Copy to clipboard using navigator.clipboard API
+        navigator.clipboard.writeText(clipboardData)
+            .then(() => {
+                alert('Table data copied to clipboard!');
+            })
+            .catch(err => {
+                console.error('Failed to copy to clipboard:', err);
+                alert('Failed to copy table data. Please try again.');
+            });
+    });
 });
 </script>
 {% endblock content %}
