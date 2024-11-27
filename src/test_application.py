@@ -560,5 +560,106 @@ class MockApplicationTestCase(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertIn(b'Task\tStatus\nTask 1\tDone', response.data)
 
+    @patch('flask.Flask.test_client')
+    def test_copy_table_with_long_text(self, mock_test_client):
+        """Test copying a table with long text in cells."""
+        table_data = [{"Task": "A" * 500, "Status": "Done"}]  # Task name is 500 characters
+        mock_test_client().post.return_value.status_code = 200
+        mock_test_client().post.return_value.data = b'Task\tStatus\n' + b'A' * 500 + b'\tDone'
+        response = mock_test_client().post('/copy', data={'table_data': table_data})
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(b'A' * 500 + b'\tDone', response.data)
+
+    @patch('flask.Flask.test_client')
+    def test_copy_table_with_numeric_data(self, mock_test_client):
+        """Test copying a table with numeric data."""
+        table_data = [{"Task": 123, "Status": 456}]
+        mock_test_client().post.return_value.status_code = 200
+        mock_test_client().post.return_value.data = b'Task\tStatus\n123\t456'
+        response = mock_test_client().post('/copy', data={'table_data': table_data})
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(b'123\t456', response.data)
+
+    @patch('flask.Flask.test_client')
+    def test_copy_table_with_empty_cells(self, mock_test_client):
+        """Test copying a table with empty cells."""
+        table_data = [{"Task": "Task 1", "Status": ""}]
+        mock_test_client().post.return_value.status_code = 200
+        mock_test_client().post.return_value.data = b'Task\tStatus\nTask 1\t'
+        response = mock_test_client().post('/copy', data={'table_data': table_data})
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(b'Task 1\t', response.data)
+
+    @patch('flask.Flask.test_client')
+    def test_copy_table_with_special_characters_and_unicode(self, mock_test_client):
+        """Test copying a table with special characters and Unicode."""
+        table_data = [{"Task": "Task ✨", "Status": "Done ✅"}]
+        mock_test_client().post.return_value.status_code = 200
+        mock_test_client().post.return_value.data = b'Task\tStatus\nTask \xe2\x9c\xa8\tDone \xe2\x9c\x85'
+        response = mock_test_client().post('/copy', data={'table_data': table_data})
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(b'Task \xe2\x9c\xa8\tDone \xe2\x9c\x85', response.data)
+
+    @patch('flask.Flask.test_client')
+    def test_copy_table_with_duplicate_rows(self, mock_test_client):
+        """Test copying a table with duplicate rows."""
+        table_data = [{"Task": "Task 1", "Status": "Done"}, {"Task": "Task 1", "Status": "Done"}]
+        mock_test_client().post.return_value.status_code = 200
+        mock_test_client().post.return_value.data = b'Task\tStatus\nTask 1\tDone\nTask 1\tDone'
+        response = mock_test_client().post('/copy', data={'table_data': table_data})
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data.count(b'Task 1\tDone'), 2)
+
+    @patch('flask.Flask.test_client')
+    def test_copy_table_with_special_column_names(self, mock_test_client):
+        """Test copying a table with special characters in column names."""
+        table_data = [{"Task Name": "Task 1", "Status@#$": "Done"}]
+        mock_test_client().post.return_value.status_code = 200
+        mock_test_client().post.return_value.data = b'Task Name\tStatus@#$\nTask 1\tDone'
+        response = mock_test_client().post('/copy', data={'table_data': table_data})
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(b'Task Name\tStatus@#$', response.data)
+
+    @patch('flask.Flask.test_client')
+    def test_copy_table_with_tabs_in_content(self, mock_test_client):
+        """Test copying a table where content contains tab characters."""
+        table_data = [{"Task": "Task\t1", "Status": "Done"}]
+        mock_test_client().post.return_value.status_code = 200
+        mock_test_client().post.return_value.data = b'Task\tStatus\nTask 1\tDone'
+        response = mock_test_client().post('/copy', data={'table_data': table_data})
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(b'Task 1\tDone', response.data)
+
+    @patch('flask.Flask.test_client')
+    def test_copy_table_with_newlines_in_content(self, mock_test_client):
+        """Test copying a table where content contains newline characters."""
+        table_data = [{"Task": "Task\n1", "Status": "Done"}]
+        mock_test_client().post.return_value.status_code = 200
+        mock_test_client().post.return_value.data = b'Task\tStatus\n"Task\n1"\tDone'
+        response = mock_test_client().post('/copy', data={'table_data': table_data})
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(b'"Task\n1"\tDone', response.data)
+
+    @patch('flask.Flask.test_client')
+    def test_copy_empty_request(self, mock_test_client):
+        """Test copying a table with no request payload."""
+        mock_test_client().post.return_value.status_code = 400
+        mock_test_client().post.return_value.data = b'Missing data'
+        response = mock_test_client().post('/copy', data={})
+        self.assertEqual(response.status_code, 400)
+        self.assertIn(b'Missing data', response.data)
+
+    @patch('flask.Flask.test_client')
+    def test_copy_table_with_very_large_cells(self, mock_test_client):
+        """Test copying a table with very large content in cells."""
+        large_content = "A" * 10000  # 10,000 characters in a single cell
+        table_data = [{"Task": large_content, "Status": "Done"}]
+        mock_test_client().post.return_value.status_code = 200
+        mock_test_client().post.return_value.data = b'Task\tStatus\n' + large_content.encode() + b'\tDone'
+        response = mock_test_client().post('/copy', data={'table_data': table_data})
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(large_content.encode() + b'\tDone', response.data)
+
+
 if __name__ == '__main__':
     unittest.main()
