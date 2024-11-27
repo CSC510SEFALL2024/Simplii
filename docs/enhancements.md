@@ -3,6 +3,7 @@
 <ol>
   <li>A custom AI email feature has been added to send a custom timetable or other suggestions.</li>
   <li>Added export to csv feature to help to generate a csv of tasks immediately.</li>
+  <li>Added a copy to clipboard feature to quickly share or store task schedules. </li>
   <li>Dark Mode with persistence has been added.</li>
   <li>Backend refactoring to ensure directory is in order and code is modularised everywhere.</li>
   <li>Added frequrently used fields for each form in base_fields.py which get validated from validators.py</li>
