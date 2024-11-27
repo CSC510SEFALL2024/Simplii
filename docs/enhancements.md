@@ -1,4 +1,4 @@
-<h2> Changes made in Simplii 5.0 </h2>
+<h2> Changes made in Simplii 6.0 </h2>
 
 <ol>
   <li>A custom AI email feature has been added to send a custom timetable or other suggestions.</li>
