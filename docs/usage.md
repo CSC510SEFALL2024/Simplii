@@ -27,6 +27,9 @@ Welcome to *Simplii*, a task and email management tool designed to help you stay
 ### 5. *Export Data*
 - *Export to CSV:* Download your task data in CSV format, with options to filter by status or category.
 
+### 6. *Copy to clipboard*
+- *Copy task schedules to clipboard:*
+
 ### 6. *Feedback and Contact*
 - *Submit Feedback:* Share your thoughts about the application through the feedback form.
 - *Contact Support:* Use the contact form to report issues or ask for assistance.
