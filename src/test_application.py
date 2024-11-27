@@ -448,5 +448,117 @@ class MockApplicationTestCase(unittest.TestCase):
         response = mock_test_client().get('/export_csv?limit=invalid')
         self.assertEqual(response.status_code, 400)
 
+    
+    @patch('flask.Flask.test_client')
+    def test_copy_button_presence(self, mock_test_client):
+        """Test that the 'Copy to Clipboard' button is present on the dashboard."""
+        mock_test_client().get.return_value.status_code = 200
+        mock_test_client().get.return_value.data = b'<button id="copyToClipboard" class="btn btn-secondary">'
+        response = mock_test_client().get('/dashboard')
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(b'id="copyToClipboard"', response.data)
+
+    @patch('flask.Flask.test_client')
+    def test_copy_empty_table(self, mock_test_client):
+        """Test copying an empty task table."""
+        mock_test_client().post.return_value.status_code = 200
+        mock_test_client().post.return_value.data = b''
+        response = mock_test_client().post('/copy', data={'table_data': []})
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data, b'')
+
+    @patch('flask.Flask.test_client')
+    def test_copy_table_with_data(self, mock_test_client):
+        """Test copying a table with data."""
+        table_data = [
+            {"Task": "Task 1", "Status": "Done"},
+            {"Task": "Task 2", "Status": "In Progress"}
+        ]
+        mock_test_client().post.return_value.status_code = 200
+        mock_test_client().post.return_value.data = b'Task\tStatus\nTask 1\tDone\nTask 2\tIn Progress'
+        response = mock_test_client().post('/copy', data={'table_data': table_data})
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(b'Task\tStatus\nTask 1\tDone\nTask 2\tIn Progress', response.data)
+
+    @patch('flask.Flask.test_client')
+    def test_copy_table_with_hidden_rows(self, mock_test_client):
+        """Test copying a table with hidden rows."""
+        table_data = [
+            {"Task": "Task 1", "Status": "Done", "hidden": False},
+            {"Task": "Task 2", "Status": "In Progress", "hidden": True}
+        ]
+        mock_test_client().post.return_value.status_code = 200
+        mock_test_client().post.return_value.data = b'Task\tStatus\nTask 1\tDone'
+        response = mock_test_client().post('/copy', data={'table_data': table_data})
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(b'Task\tStatus\nTask 1\tDone', response.data)
+
+    @patch('flask.Flask.test_client')
+    def test_copy_table_special_characters(self, mock_test_client):
+        """Test copying a table with special characters."""
+        table_data = [
+            {"Task": '"Special, Task"', "Status": "Done"}
+        ]
+        mock_test_client().post.return_value.status_code = 200
+        mock_test_client().post.return_value.data = b'Task\tStatus\n"Special, Task"\tDone'
+        response = mock_test_client().post('/copy', data={'table_data': table_data})
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(b'"Special, Task"\tDone', response.data)
+
+    @patch('flask.Flask.test_client')
+    def test_copy_large_table(self, mock_test_client):
+        """Test copying a large table with 1000 rows."""
+        table_data = [{"Task": f"Task {i}", "Status": f"Status {i}"} for i in range(1000)]
+        rows = [b'Task\tStatus'] + [f"Task {i}\tStatus {i}".encode() for i in range(1000)]
+        mock_test_client().post.return_value.status_code = 200
+        mock_test_client().post.return_value.data = b'\n'.join(rows)
+        response = mock_test_client().post('/copy', data={'table_data': table_data})
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(b"Task 0\tStatus 0", response.data)
+        self.assertIn(b"Task 999\tStatus 999", response.data)
+
+    @patch('flask.Flask.test_client')
+    def test_copy_action_column_excluded(self, mock_test_client):
+        """Test that the 'Actions' column is excluded from the copied data."""
+        table_data = [
+            {"Task": "Task 1", "Status": "Done", "Actions": "Edit/Delete"}
+        ]
+        mock_test_client().post.return_value.status_code = 200
+        mock_test_client().post.return_value.data = b'Task\tStatus\nTask 1\tDone'
+        response = mock_test_client().post('/copy', data={'table_data': table_data})
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(b"Task\tStatus\nTask 1\tDone", response.data)
+
+    @patch('flask.Flask.test_client')
+    def test_copy_success_notification(self, mock_test_client):
+        """Test success notification for copying the task table."""
+        mock_test_client().post.return_value.status_code = 200
+        mock_test_client().post.return_value.data = b'Task table copied successfully!'
+        response = mock_test_client().post('/copy', data={'table_data': []})
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(b'Task table copied successfully!', response.data)
+
+    @patch('flask.Flask.test_client')
+    def test_copy_error_notification(self, mock_test_client):
+        """Test error notification for failed copying."""
+        mock_test_client().post.side_effect = Exception("Clipboard error")
+        try:
+            response = mock_test_client().post('/copy', data={'table_data': []})
+        except Exception as e:
+            self.assertEqual(str(e), "Clipboard error")
+
+    @patch('flask.Flask.test_client')
+    def test_copy_partial_rows(self, mock_test_client):
+        """Test copying when only partial rows are visible."""
+        table_data = [
+            {"Task": "Task 1", "Status": "Done"},
+            {"Task": "Task 2", "Status": "In Progress", "visible": False}
+        ]
+        mock_test_client().post.return_value.status_code = 200
+        mock_test_client().post.return_value.data = b'Task\tStatus\nTask 1\tDone'
+        response = mock_test_client().post('/copy', data={'table_data': table_data})
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(b'Task\tStatus\nTask 1\tDone', response.data)
+
 if __name__ == '__main__':
     unittest.main()
