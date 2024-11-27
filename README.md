@@ -4,10 +4,10 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 ![Github](https://img.shields.io/badge/language-python-red.svg)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
-![Code Coverage]()
+![Code Coverage](https://github.com/CSC510SEFALL2024/Simplii/blob/main/src/coverage.svg)
 [![Python Style Checker](https://github.com/CSC510SEFALL2024/Simplii/actions/workflows/style_checker.yml/badge.svg)](https://github.com/CSC510SEFALL2024/Simplii/actions/workflows/style_checker.yml)
 [![Close as a feature](https://github.com/CSC510SEFALL2024/Simplii/actions/workflows/close_as_a_feature.yml/badge.svg)](https://github.com/CSC510SEFALL2024/Simplii/actions/workflows/close_as_a_feature.yml)
-[![GitHub version](https://img.shields.io/github/v/release/CSC510SEFALL2024/Simplii)](https://github.com/prateeksingamsetty/Simplii/releases)
+[![GitHub version](https://img.shields.io/github/v/release/CSC510SEFALL2024/Simplii)](https://github.com/CSC510SEFALL2024/Simplii/releases)
 [![Lint Python](https://github.com/CSC510SEFALL2024/Simplii/actions/workflows/syntax_checker.yml/badge.svg)](https://github.com/CSC510SEFALL2024/Simplii/actions/workflows/syntax_checker.yml)
 
 <a href="https://github.com/CSC510SEFALL2024/Simplii/forks" target="blank">
