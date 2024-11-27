@@ -15,13 +15,20 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v2
         with:
-          python-version: '3.8'
+          python-version: '3.8'  # Use your preferred Python version
 
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install flask
+          pip install pytest pytest-cov  # Install pytest and pytest-cov
 
-      - name: Run Unit Tests
+      - name: Run Unit Tests with Coverage (using unittest)
         run: |
-          python -m unittest src/test_application.py
+          # Use pytest to collect coverage while running unittest
+          pytest --cov=src --cov-report=xml src/test_application.py -p no:warnings
+
+      - name: Upload coverage reports to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}  # Use the token you set up as a secret
