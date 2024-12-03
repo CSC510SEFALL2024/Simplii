@@ -51,7 +51,7 @@ class OTPForm(FlaskForm):
     submit = SubmitField('Verify')
 from flask_login import LoginManager, login_required
 
-from firebase_config import auth
+from firebase_config import auth_client, auth
 
 app = Flask(__name__)
 app.secret_key = 'secret'
@@ -75,6 +75,9 @@ genai.configure(api_key=GEMINI_API_KEY)
 model = genai.GenerativeModel('gemini-pro')
 
 def generate_task_prompt(tasks):
+    # Log route access
+    app.logger.info("Route accessed: generate task prompt")
+    # print("All tasks", tasks)
     today = datetime.now().date()
     this_week_end = today + timedelta(days=(6-today.weekday()))
     this_month_end = (today.replace(day=1) + timedelta(days=32)).replace(day=1) - timedelta(days=1)
@@ -82,6 +85,9 @@ def generate_task_prompt(tasks):
     today_tasks = []
     week_tasks = []
     month_tasks = []
+
+    # print("This week end, ", this_week_end)
+    # print("This month end, ", this_month_end)
     
     for task in tasks:
         due_date = datetime.strptime(task['duedate'], '%Y-%m-%d').date()
@@ -91,38 +97,40 @@ def generate_task_prompt(tasks):
             week_tasks.append(task)
         elif due_date <= this_month_end:
             month_tasks.append(task)
+    
+    prompt =    f"""   As a professional task management assistant, create a concise, professional, and motivating email response for a user' (with name {session.get('name')}) task list. Use the following task data:
 
-    prompt =    f"""
-                As a professional task management assistant, create a concise, professional, and motivating email response for a user's task list. Use the following task data:
+                        - **Today's Tasks ({len(today_tasks)}):** {', '.join(f"{t['taskname']} (Priority: {t['priority']})" for t in today_tasks) if today_tasks else 'None'}
+                        - **This Week's Tasks ({len(week_tasks)}):** {', '.join(f"{t['taskname']} (Priority: {t['priority']})" for t in week_tasks) if week_tasks else 'None'}
+                        - **This Month's Tasks ({len(month_tasks)}):** {', '.join(f"{t['taskname']} (Priority: {t['priority']})" for t in month_tasks) if month_tasks else 'None'}
 
-                - **Today's Tasks ({len(today_tasks)}):** {', '.join(t['taskname'] for t in today_tasks) if today_tasks else 'None'}
-                - **This Week's Tasks ({len(week_tasks)}):** {', '.join(t['taskname'] for t in week_tasks) if week_tasks else 'None'}
-                - **This Month's Tasks ({len(month_tasks)}):** {', '.join(t['taskname'] for t in month_tasks) if month_tasks else 'None'}
+                        Please ensure the email is structured and formatted as follows:
 
-                Please ensure the email is structured and formatted as follows:
+                        1. **A crisp and motivational introduction:** Greet the user warmly and set a positive tone for task management.
+                        2. **Task Breakdown:** Provide a concise, well-structured breakdown of tasks by category (Today, This Week, This Month), including the priority level (high, medium, low) for each task. If there are no tasks in a specific category, acknowledge this in a professional and encouraging way.
+                        3. **Time Allocation & Priorities:** Recommend time allocation and priorities for tasks in each category (if applicable). Be specific and actionable:
+                            - For tasks with **high priority**, focus on completing them first. These should be your top priority as they have the most impact.
+                            - For **medium priority** tasks, recommend tackling them after high-priority items are done. These are important but can be completed once the urgent tasks are handled.
+                            - **Low priority** tasks can be tackled later or delegated if necessary.
+                        4. **Work-Life Balance Tips:** Include practical, actionable tips to help the user maintain balance, such as time for breaks, manageable task sizes, and personal time.
+                        5. **Conclusion:** End with a motivating note. If all tasks are completed, congratulate the user and encourage them to stay proactive in planning future tasks. If some tasks are still pending, reassure the user that they can achieve their goals by staying focused.
+                        6. **Sign-Off:** Conclude the email with "Best regards, Simplii AI".
 
-                1. **A crisp and motivational introduction:** Greet the user warmly and set a positive tone for task management.
-                2. **Task Breakdown:** Provide a concise, well-structured breakdown of tasks by category (Today, This Week, This Month). If there are no tasks in a specific category, acknowledge this in a professional and encouraging way.
-                3. **Time Allocation & Priorities:** Recommend time allocation and priorities for tasks in each category (if applicable). Be specific and actionable.
-                4. **Work-Life Balance Tips:** Include short, practical tips to help the user maintain balance.
-                5. **Conclusion:** End on a motivating and uplifting note. If all tasks are completed, congratulate the user and encourage proactive planning for future tasks.
-                6. **Sign-Off:** Conclude the email with "Best regards, Simplii AI".
+                        Formatting Requirements:
+                        - Use a clear and professional email format with proper sections and spacing.
+                        - Use bullet points or numbered lists where appropriate for better readability.
+                        - Keep the tone formal yet encouraging and motivating.
+                        - Ensure the email is concise, avoiding unnecessary verbosity.
 
-                Formatting Requirements:
-                - Use a clear and professional email format with proper sections and spacing.
-                - Use bullet points or numbered lists where appropriate for better readability.
-                - Keep the tone formal yet encouraging.
-                - Ensure the email is concise, avoiding unnecessary verbosity.
-
-                Make sure to handle cases where there are no tasks across one or all categories, providing a meaningful and positive message in such scenarios. The email must remain polished and professional in every case.
-                """
+                        Make sure to handle cases where there are no tasks across one or all categories, providing a meaningful and positive message in such scenarios. The email must remain polished, professional, and actionable in every case.
+                        """
 
     return prompt
 
 def send_task_email(user_email, tasks):
     try:
-        print("Here in send_task_email")
         prompt = generate_task_prompt(tasks)
+        print("Generated Prompt, ", prompt)
         response = model.generate_content(prompt)
         
         # Convert Markdown to HTML
@@ -150,6 +158,7 @@ def handle_email_request():
 
         # Get user email from session
         user_email = session.get('email')
+        
         if not user_email:
             app.logger.error("User email not found in session")
             return jsonify({'error': 'User email not found'}), 400
@@ -159,7 +168,7 @@ def handle_email_request():
         tasks = get_user_tasks(user_id)  # Implement this function
         
         # Debug logging
-        print(f"Debug info - Email: {user_email}, UserId: {user_id}, Tasks: {tasks}")
+        # print(f"Debug info - Email: {user_email}, UserId: {user_id}, Tasks: {tasks}")
         
         # Commented out email sending logic
         success = send_task_email(user_email, tasks)
@@ -181,12 +190,13 @@ def get_user_tasks(user_str_id) :
     # Calculate the date 7 days from now
     thirty_days_later = current_date + timedelta(days=31)
 
-    print(f"Debug info - UserId: {user_id}, Current Date: {current_date}, Thirty Days Later: {thirty_days_later.strftime('%Y-%m-%d')}")
+    # print(f"Debug info - UserId: {user_id}, Current Date: {current_date}, Thirty Days Later: {thirty_days_later.strftime('%Y-%m-%d')}")
 
     relevant_tasks = mongo.db.tasks.find({
                 'user_id': user_id,
                 'duedate': {
-                    # '$gte': current_date.strftime('%Y-%m-%d'),
+                    '$gte': current_date.strftime('%Y-%m-%d'),
+
                     '$lte': thirty_days_later.strftime('%Y-%m-%d')
                 }
             }).sort('duedate', 1)
@@ -256,87 +266,37 @@ def home():
         return redirect(url_for('dashboard'))
     else:
         return redirect(url_for('login'))
-
-# Reset Password route
-@app.route("/resetPassword/<token>", methods=['GET', 'POST'])
-def resetPassword(token):
-    if request.method == 'GET':
-        try:
-            # Verify the token and get the associated email
-            email = serializer.loads(token, max_age=3600)  # Max age in seconds (1 hour)
-
-            # Here, you can add code to identify the user by their email and present a password reset form
-            # For example, you can store the email in a session or a hidden form field to ensure it's the same user
-
-            return render_template('resetPassword.html', email=email)
-
-        except SignatureExpired:
-            flash('The password reset link has expired.', 'error')
-            return redirect(url_for('forgotPassword'))
-        except BadSignature:
-            flash('Invalid password reset link.', 'error')
-            return redirect(url_for('forgotPassword'))
-
-    elif request.method == 'POST':
-        email = request.form.get('email')
-        new_password = request.form.get('new_password')
-        new_password = bcrypt.hashpw(new_password.encode("utf-8"), bcrypt.gensalt())
-        # Update the user's password in the database
-        user = mongo.db.users.find_one({'email': email})
-        if user:
-            user_id = user['_id']
-            # Update the password for the user with the specified ID
-            mongo.db.users.update_one(
-                {"_id": user_id},
-                {"$set": {"pwd": new_password}}
-            )
-
-            flash('Password reset successful. You can now log in with your new password.', 'success')
-            return redirect(url_for('login'))
-
-    return render_template('resetPassword.html')
-
-# Handle cases where the user is not found or the old password doesn't match
-# You can redirect to an appropriate page or display an error message.
-
 @app.route("/forgotPassword", methods=['GET', 'POST'])
 def forgotPassword():
-    ############################
-    # forgotPassword() redirects the user to dummy template.
-    # route "/forgotPassword" will redirect to forgotPassword() function.
-    # input: The function takes session as the input
-    # Output: Out function will redirect to the dummy page
-    # ##########################
-    if not session.get('user_id'):
+    if not session.get('user_id'):  # Ensure user isn't logged in
         form = ForgotPasswordForm()
         if form.validate_on_submit():
-            if request.method == 'POST':
-                email = request.form.get('email')
-                # id = mongo.db.users.find_one({'email': email})
-                user = mongo.db.users.find_one({'email': email})
-
-
-
-                if user:
-                    # Generate a reset token
-                    reset_token = serializer.dumps(email, salt='password-reset')
-
-                    # Store the reset token in the user's document in the database
-                    mongo.db.users.update_one({'_id': user['_id']}, {'$set': {'reset_token': reset_token}})
-
-                    # Send a reset password email
-                    reset_link = url_for('resetPassword', token=reset_token, _external=True)
-                    msg = Message('Password Reset', sender=app.config['MAIL_USERNAME'], recipients=[email])
-                    msg.body = f'Visit the following link to reset your password: {reset_link}'
-                    mail.send(msg)
-
-                    flash('Password reset link sent to your email.', 'info')
+            email = form.email.data
+            try:
+                # Attempt to send the password reset email
+                auth_client.send_password_reset_email(email)
+                flash('Password reset link sent to your email.', 'info')
+            except auth.AuthError as e:  # Firebase-specific errors
+                error_message = str(e)
+                if "EMAIL_NOT_FOUND" in error_message:
+                    flash('This email is not registered with us. Please check and try again.', 'danger')
+                elif "INVALID_EMAIL" in error_message:
+                    flash('Invalid email address. Please enter a valid email.', 'danger')
+                elif "USER_DISABLED" in error_message:
+                    flash('This account has been disabled. Please contact support.', 'danger')
                 else:
-                    flash('Email address not found.', 'error')
-        
+                    flash('An error occurred. Please try again.', 'danger')
+                # Log the error for debugging
+                print(f"AuthError during password reset: {error_message}")
+            except Exception as e:
+                # Catch other exceptions and log them
+                print(f"Unexpected error during password reset: {e}")
+                flash('An unexpected error occurred. Please try again.', 'danger')
     else:
         return redirect(url_for('home'))
-    return render_template('forgotPassword.html', title='Register', form=form)
+    
+    return render_template('forgotPassword.html', title='Forgot Password', form=form)
+
 
 
 # @app.route('/chatbot', methods=['GET', 'POST'])
@@ -679,171 +639,41 @@ def profile():
     return render_template('profile.html', user=user)
 
 
-# @app.route("/register", methods=['GET', 'POST'])
-# def register():
-#     # ############################
-#     # register() function displays the Registration portal (register.html) template
-#     # route "/register" will redirect to register() function.
-#     # RegistrationForm() called and if the form is submitted then various values are fetched and updated into database
-#     # Input: Username, Email, Password, Confirm Password
-#     # Output: Value update in database and redirected to home login page
-#     # ##########################
-#     if not session.get('email'):
-#         form = RegistrationForm()
-#         if form.validate_on_submit():
-#             if request.method == 'POST':
-#                 username = request.form.get('username')
-#                 email = request.form.get('email')
-#                 password = request.form.get('password')
-#                 mongo.db.users.insert_one({'name': username, 'email': email, 'pwd': bcrypt.hashpw(
-#                     password.encode("utf-8"), bcrypt.gensalt()), 'tasksList':[], 'temp': None})
-#                 auth.create_user_with_email_and_password(email, password)
-#                 msg = Message('Welcome to Simplii: Your Task Scheduling Companion', sender='dummysinghhh@gmail.com', recipients=[email])
-#                 msg.body = f"Hey {username},\n\n" \
-#                 "We're excited to welcome you to Simplii, your new task scheduling companion. Simplii is here to help you stay organized, meet deadlines, and achieve your goals efficiently.\n\n" \
-#                 "With Simplii, you can schedule your tasks, set deadlines, and work on them with ease. Never miss an important deadline again!\n\n" \
-#                 "Thank you for choosing Simplii. We're thrilled to have you on board. If you have any questions or need assistance, feel free to reach out to us.\n\n" \
-#                 "Best regards,\n" \
-#                 "The Simplii Team"
-#                 mail.send(msg)
-#                 print("Message sent!")
-#                 flash(f'Account created for {form.username.data}!', 'success')
-#                 return redirect(url_for('home'))
-#     else:
-#         return redirect(url_for('home'))
-#     return render_template('register.html', title='Register', form=form)
-
-# @app.route("/register", methods=['GET', 'POST'])
-# def register():
-#     # ############################
-#     # register() function displays the Registration portal (register.html) template
-#     # route "/register" will redirect to register() function.
-#     # RegistrationForm() called and if the form is submitted then various values are fetched and updated into database
-#     # Input: Username, Email, Password, Confirm Password
-#     # Output: Value update in database and redirected to home login page
-#     # ##########################
-#     if not session.get('email'):
-#         form = RegistrationForm()
-#         if form.validate_on_submit():
-#             if request.method == 'POST':
-#                 username = request.form.get('username')
-#                 email = request.form.get('email')
-#                 password = request.form.get('password')
-#                 mongo.db.users.insert_one({'name': username, 'email': email, 'pwd': bcrypt.hashpw(
-#                     password.encode("utf-8"), bcrypt.gensalt()), 'tasksList':[], 'temp': None})
-#                 auth.create_user_with_email_and_password(email, password)
-#                 msg = Message('Welcome to Simplii: Your Task Scheduling Companion', sender='dummysinghhh@gmail.com', recipients=[email])
-#                 msg.body = f"Hey {username},\n\n" \
-#                 "We're excited to welcome you to Simplii, your new task scheduling companion. Simplii is here to help you stay organized, meet deadlines, and achieve your goals efficiently.\n\n" \
-#                 "With Simplii, you can schedule your tasks, set deadlines, and work on them with ease. Never miss an important deadline again!\n\n" \
-#                 "Thank you for choosing Simplii. We're thrilled to have you on board. If you have any questions or need assistance, feel free to reach out to us.\n\n" \
-#                 "Best regards,\n" \
-#                 "The Simplii Team"
-#                 mail.send(msg)
-#                 print("Message sent!")
-#                 flash(f'Account created for {form.username.data}!', 'success')
-#                 return redirect(url_for('home'))
-#     else:
-#         return redirect(url_for('home'))
-#     return render_template('register.html', title='Register', form=form)
-
-
-# @app.route("/register", methods=['GET', 'POST'])
-# def register():
-#     if not session.get('email'):
-#         form = RegistrationForm()
-#         if form.validate_on_submit():
-#             if request.method == 'POST':
-#                 username = request.form.get('username')
-#                 email = request.form.get('email')
-#                 password = request.form.get('password')
-
-#                 otp = random.randint(100000, 999999)
-                
-#                 mongo.db.users.insert_one({
-#                     'name': username,
-#                     'email': email,
-#                     'pwd': bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt()),
-#                     'tasksList': [],
-#                     'otp': otp,  
-#                     'is_verified': False  
-#                 })
-
-#                 msg = Message('Your OTP for Simplii Registration', sender='dummysinghhh@gmail.com', recipients=[email])
-#                 msg.body = f"Hello {username},\n\nYour OTP for registration is: {otp}\n\nPlease enter this code to complete your registration.\n\nThank you,\nThe Simplii Team"
-#                 mail.send(msg)
-#                 print("OTP sent!")
-
-#                 session['email'] = email
-#                 flash(f'OTP sent to {email}. Please verify your email to complete registration.', 'info')
-                
-#                 return redirect(url_for('otp_verification'))
-#     else:
-#         return redirect(url_for('home'))
-#     return render_template('register.html', title='Register', form=form)
-
-# @app.route("/otp_verification", methods=['GET', 'POST'])
-# def otp_verification():
-#     # Redirect to login if no email in session
-#     if 'email' not in session:
-#         return redirect(url_for('login'))
-
-#     # Initialize the form
-#     form = OTPForm()
-
-#     # Validate form submission
-#     if form.validate_on_submit():  # Check if form was submitted and is valid
-#         otp_entered = form.otp.data
-#         user = mongo.db.users.find_one({'email': session['email']})
-
-#         if user and user['otp'] == int(otp_entered):  # OTP matches
-#             mongo.db.users.update_one({'email': session['email']}, {'$set': {'is_verified': True, 'otp': None}})
-#             session['user'] = user['name']
-#             flash('Your account has been verified successfully!', 'success')
-#             return redirect(url_for('dashboard'))
-#         else:
-#             flash('Invalid OTP. Please try again.', 'danger')
-
-#     # Render the template with the form
-#     return render_template('otp_verification.html', title='OTP Verification', form=form)
-
 @app.route("/register", methods=['GET', 'POST'])
 def register():
     if not session.get('email'):
         form = RegistrationForm()
         if form.validate_on_submit():
-            if request.method == 'POST':
-                username = request.form.get('username')
-                email = request.form.get('email')
-                password = request.form.get('password')
+            username = request.form.get('username')
+            email = request.form.get('email')
+            password = request.form.get('password')
 
-                otp = random.randint(100000, 999999)
+            try:
+                # Create user in Firebase
+                user = auth_client.create_user_with_email_and_password(email, password)
+
+                # Send verification email using Firebase
+                auth_client.send_email_verification(user['idToken'])
                 
-                # Save user details in MongoDB without OTP
+                # Save user in MongoDB without OTP logic
                 mongo.db.users.insert_one({
                     'name': username,
                     'email': email,
                     'pwd': bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt()),
                     'tasksList': [],
-                    'is_verified': False  
+                    'is_verified': False
                 })
-                auth.create_user_with_email_and_password(email, password)
 
-                # Send OTP email
-                msg = Message('Your OTP for Simplii Registration', sender='dummysinghhh@gmail.com', recipients=[email])
-                msg.body = f"Hello {username},\n\nYour OTP for registration is: {otp}\n\nPlease enter this code to complete your registration.\n\nThank you,\nThe Simplii Team"
-                mail.send(msg)
-                print("OTP sent!")
-
-                # Store OTP in session
-                session['email'] = email
-                session['otp'] = otp  # Store OTP in session
-                flash(f'OTP sent to {email}. Please verify your email to complete registration.', 'info')
-                
-                return redirect(url_for('otp_verification'))
+                flash(f'Verification email sent to {email}. Please verify your email.', 'info')
+                return redirect(url_for('login'))
+            except Exception as e:
+                print(f"Error during registration: {e}")
+                flash('Registration Unsuccessful. Please try again.', 'danger')
     else:
         return redirect(url_for('home'))
+
     return render_template('register.html', title='Register', form=form)
+
 
 @app.route("/otp_verification", methods=['GET', 'POST'])
 def otp_verification():
@@ -1208,53 +1038,45 @@ def task_history():
     
     return render_template('task_history.html', completed_tasks=completed_tasks)
 
-
 @app.route("/login", methods=['GET', 'POST'])
 def login():
-    # ############################
-    # login() function displays the Login form (login.html) template
-    # route "/login" will redirect to login() function.
-    # LoginForm() called and if the form is submitted then various values are fetched and verified from the database entries
-    # Input: Email, Password, Login Type
-    # Output: Account Authentication and redirecting to Dashboard
-    # ##########################
     if not session.get('user_id'):
         form = LoginForm()
         if form.validate_on_submit():
             email = form.email.data
             password = form.password.data
             try:
-                user = auth.sign_in_with_email_and_password(email, password)
-                temp = mongo.db.users.find_one({'email': form.email.data}, {
-                    'email', 'name', 'pwd'})
-                flash('You have been logged in!', 'success')
-                session['email'] = temp['email']
-                session['name'] = temp['name']
-                session['user_id'] = str(temp['_id'])
-                return redirect(url_for('dashboard'))
+                # Authenticate with Firebase
+                user = auth_client.sign_in_with_email_and_password(email, password)
+                user_info = auth.get_user_by_email(email)  # Fetch user details from Firebase Admin SDK
+                
+                if user_info.email_verified:  # Check if the email is verified
+                    temp = mongo.db.users.find_one({'email': email}, {'email', 'name', 'pwd'})
+                    session['email'] = temp['email']
+                    session['name'] = temp['name']
+                    session['user_id'] = str(temp['_id'])
+                    flash('You have been logged in!', 'success')
+                    return redirect(url_for('dashboard'))
+                else:
+                    flash('Please verify your email address before logging in.', 'danger')
+                    return redirect(url_for('login'))
+
             except Exception as e:
                 print(f"Error during login: {e}")
-                flash(
-                    'Login Unsuccessful. Please check username and password',
-                    'danger')
+                flash('Login Unsuccessful. Please check your email and password.', 'danger')
     else:
-        print("session details ", session)
         return redirect(url_for('home'))
-    return render_template(
-        'login.html',
-        title='Login',
-        form=form)
+
+    return render_template('login.html', title='Login', form=form)
 
 
-@app.route("/logout", methods=['GET', 'POST'])
+@app.route("/logout", methods=["POST"])
 def logout():
-    # ############################
-    # logout() function just clears out the session and returns success
-    # route "/logout" will redirect to logout() function.
-    # Output: session clear
-    # ##########################
+    # Clear session data
     session.clear()
-    return "success"
+
+    flash("You have successfully logged out.", "info")
+    return redirect(url_for("login"))
 
 @app.route("/notifications")
 @login_required
